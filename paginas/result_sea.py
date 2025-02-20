@@ -1,14 +1,13 @@
 # Arquivo: result_sea.py
-# Data: 15/02/2025 07:00
+# Data: 19/02/2025 14:00
 # Pagina de resultados - Sem a Etapa Agrícola
+# Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
 
 import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
-
-# Nome do banco de dados
-DB_NAME = "calcpc.db"
+from config import DB_PATH  # Adicione esta importação
 
 def format_br_number(value):
     """
@@ -413,10 +412,24 @@ def show_results():
             
         user_id = st.session_state.user_id
         
+        # Verifica se existem dados do usuário na forms_tab
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT COUNT(*) FROM forms_tab 
+            WHERE user_id = ?
+        """, (user_id,))
+        
+        if cursor.fetchone()[0] == 0:
+            st.warning("ALERTA: Primeiro favor preencher os dados da simulação no: Form - Tipo de Café, Form - Moagem e Torrefação ou Form - Embalagem")
+            conn.close()
+            return
+        
         # Adiciona o subtítulo no início da página
         subtitulo()
         
-        conn = sqlite3.connect(DB_NAME)
+        conn = sqlite3.connect(DB_PATH)  # Atualizado para usar DB_PATH
         cursor = conn.cursor()
         
         # Garante que existam dados para o usuário
