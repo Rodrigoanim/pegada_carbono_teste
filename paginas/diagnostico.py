@@ -1,5 +1,7 @@
 # Arquivo: diagnostico.py
 # Data: 20/02/2025 - Hora: 13H00
+# type: ignore
+# pylance: disable=reportMissingModuleSource
 
 import streamlit as st
 import sys
@@ -8,10 +10,7 @@ import warnings
 import logging
 import platform
 from datetime import datetime
-
-# ignore warnings
 import psutil
-
 
 def show_diagnostics():
     """Página de diagnóstico do sistema"""

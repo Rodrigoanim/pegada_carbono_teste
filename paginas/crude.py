@@ -1,8 +1,8 @@
 # Arquivo: crude.py
-# Data: 18/02/2025  14:00
+# Data: 22/02/2025  11:00
 # IDE Cursor - claude 3.5 sonnet
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
-# adição do perfil: master
+# Nova coluna - col_len
 
 import streamlit as st
 import pandas as pd
@@ -66,17 +66,18 @@ def show_crud():
         },
         'forms_tab': {
             'ID_element': 'small',
-            'name_element': 'medium',
+            'name_element': 'small',
             'type_element': 'small',
             'math_element': 'small',
             'msg_element': 'medium',
             'value_element': 'small',
-            'select_element': 'medium',
+            'select_element': 'small',
             'str_element': 'medium',
             'e_col': 'small',
             'e_row': 'small',
             'user_id': 'small',
-            'section': 'small'
+            'section': 'small',
+            'col_len': 'small'
         },
         'forms_insumos': {
             'ID_element': 'small',
@@ -240,6 +241,25 @@ def show_crud():
                     FROM log_acessos 
                     ORDER BY data_acesso DESC, hora_acesso DESC, id DESC
                 """)
+            elif selected_table == "forms_tab":
+                # Adiciona filtro por user_id para forms_tab
+                user_id_filter = st.number_input("Filtrar por User ID (0 para mostrar todos)", min_value=0, value=0)
+                
+                # Adiciona seleção de ordenação
+                sort_column = st.selectbox(
+                    "Ordenar por coluna",
+                    ["ID_element", "name_element", "type_element", "e_col", "e_row", "user_id", "section"],
+                    index=0
+                )
+                sort_order = st.selectbox("Ordem", ["ASC", "DESC"], index=0)
+                
+                # Query com filtro e ordenação
+                query = f"""
+                    SELECT * FROM forms_tab
+                    {f"WHERE user_id = {user_id_filter}" if user_id_filter > 0 else ""}
+                    ORDER BY {sort_column} {sort_order}
+                """
+                cursor.execute(query)
             else:
                 cursor.execute(f"SELECT * FROM {selected_table}")
             
@@ -383,20 +403,31 @@ def show_crud():
             # Botão para salvar alterações
             if st.button("Salvar Alterações"):
                 try:
-                    # Detecta mudanças
-                    if not edited_df.equals(df):
-                        # Atualiza o banco de dados
-                        for index, row in edited_df.iterrows():
-                            update_query = f"""
-                            UPDATE {selected_table}
-                            SET {', '.join(f'{col} = ?' for col in columns)}
-                            WHERE rowid = {index + 1}
+                    # Detecta registros novos comparando o tamanho dos DataFrames
+                    if len(edited_df) > len(df):
+                        # Processa novos registros
+                        new_records = edited_df.iloc[len(df):]
+                        for _, row in new_records.iterrows():
+                            # Remove o índice da linha que é automaticamente adicionado
+                            row_values = [row[col] for col in columns]
+                            insert_query = f"""
+                            INSERT INTO {selected_table} ({', '.join(columns)})
+                            VALUES ({', '.join(['?' for _ in columns])})
                             """
-                            cursor.execute(update_query, tuple(row))
-                        
-                        conn.commit()
-                        st.success("Alterações salvas com sucesso!")
-                        st.rerun()
+                            cursor.execute(insert_query, tuple(row_values))
+
+                    # Atualiza registros existentes
+                    for index, row in edited_df.iloc[:len(df)].iterrows():
+                        update_query = f"""
+                        UPDATE {selected_table}
+                        SET {', '.join(f'{col} = ?' for col in columns)}
+                        WHERE rowid = {index + 1}
+                        """
+                        cursor.execute(update_query, tuple(row))
+                    
+                    conn.commit()
+                    st.success("Alterações salvas com sucesso!")
+                    st.rerun()
                 
                 except Exception as e:
                     st.error(f"Erro ao salvar alterações: {str(e)}")

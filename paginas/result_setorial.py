@@ -1,5 +1,5 @@
 # Arquivo: result_setorial.py
-# Data: 16/02/2025 14:25
+# Data: 21/02/2025 14:25
 # Pagina de resultados - Setorial
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
 
@@ -8,6 +8,7 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 from config import DB_PATH  # Adicione esta importação
+from paginas.form_model_recalc import verificar_dados_usuario, calculate_formula, atualizar_formulas
 
 def format_br_number(value):
     """
@@ -390,7 +391,7 @@ def subtitulo():
     Exibe um subtítulo centralizado com estilo personalizado
     """
     st.markdown("""
-        <h2 style='
+        <p style='
             text-align: Left;
             font-size: 36px;
             color: #2E2E2E;
@@ -398,7 +399,7 @@ def subtitulo():
             margin-bottom: 30px;
             font-family: sans-serif;
             font-weight: 500;
-        '>Resultados Comparativos ao Setor</h2>
+        '>Comparação Setorial</p>
     """, unsafe_allow_html=True)
 
 def show_results():
@@ -415,8 +416,13 @@ def show_results():
         # Adiciona o subtítulo no início da página
         subtitulo()
         
-        conn = sqlite3.connect(DB_PATH)  # Atualizado para usar DB_PATH
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        
+        # Atualiza todas as fórmulas
+        if not atualizar_formulas(cursor, user_id):
+            st.error("Erro ao atualizar fórmulas!")
+            return
         
         # Garante que existam dados para o usuário
         new_user(cursor, user_id)

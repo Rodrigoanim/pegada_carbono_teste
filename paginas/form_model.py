@@ -1,8 +1,8 @@
 # Arquivo: form_model.py
-# Data: 19/02/2025 - Hora: 18H00
 # CursorAI - claude 3.5 sonnet 
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
-# Rotina de coleta de logs de acesso ao sistema
+# ajustes de texto Anna
+# 24/02/2025 - col_len - 99% OK
 
 import sqlite3
 import streamlit as st
@@ -132,10 +132,29 @@ def calculate_formula(formula, values, cursor):
         
         # Substitui vírgulas por pontos antes do eval
         processed_formula = processed_formula.replace(',', '.')
-        result = eval(processed_formula)
-        return float(result)
+        
+        # Verifica divisão por zero antes do eval
+        # Primeiro, avalia a expressão para obter os denominadores
+        def safe_div(x, y):
+            if abs(float(y)) < 1e-10:  # Considera valores muito próximos de zero
+                return 0.0
+            return x / y
+        
+        # Cria um ambiente seguro para eval com a função de divisão segura
+        safe_env = {
+            'safe_div': safe_div,
+            '__builtins__': None
+        }
+        
+        # Substitui todas as divisões pela função segura
+        processed_formula = re.sub(r'(\d+\.?\d*|\([^)]+\))\s*/\s*(\d+\.?\d*|\([^)]+\))', r'safe_div(\1, \2)', processed_formula)
+        
+        result = float(eval(processed_formula, safe_env, {}))
+        return result
         
     except Exception as e:
+        if "division by zero" in str(e):
+            return 0.0  # Retorna 0 silenciosamente em caso de divisão por zero
         st.error(f"Erro no cálculo da fórmula: {str(e)}")
         return 0.0
 
@@ -206,18 +225,15 @@ def titulo(cursor, element):
     Exibe títulos formatados na interface com base nos valores do banco de dados.
     """
     try:
-        name, msg, col, row, str_value = element[0], element[3], element[7], element[8], element[6]
-        type_elem = element[1]  # type_element
-        
-        # Verifica se a coluna é válida
-        if col > 6:
-            st.error(f"Posição de coluna inválida para o título {name}: {col}. Deve ser entre 1 e 6.")
-            return
+        name = element[0]
+        type_elem = element[1]
+        msg = element[3].strip("'").strip('"')  # Remove aspas simples e duplas
+        str_value = element[6].strip("'").strip('"') if element[6] else ''  # Remove aspas simples e duplas
         
         # Se for do tipo 'titulo', usa o str_element do próprio registro
         if type_elem == 'titulo':
             if str_value:
-                formatted_msg = f"{str_value.replace('✅ Operação concluída com sucesso!', msg)}"
+                formatted_msg = str_value.replace('✅ Operação concluída com sucesso!', msg)
                 st.markdown(formatted_msg, unsafe_allow_html=True)
                 return
         
@@ -234,7 +250,6 @@ def titulo(cursor, element):
 def new_user(cursor, user_id):
     """
     Inicializa registros para um novo usuário copiando dados do user_id 0.
-    Mantém a seção original dos registros ao copiar.
     """
     try:
         # Verifica se já existem registros para o usuário
@@ -242,25 +257,23 @@ def new_user(cursor, user_id):
             SELECT COUNT(*) FROM forms_tab WHERE user_id = ?
         """, (user_id,))
         
-        if cursor.fetchone()[0] > 0:
-            return  # Usuário já tem registros
+        if cursor.fetchone()[0] == 0:  # Se não existem registros
+            # Copia todos os dados do user_id 0
+            cursor.execute("""
+                INSERT INTO forms_tab (
+                    name_element, type_element, math_element, msg_element,
+                    value_element, select_element, str_element, e_col, e_row,
+                    section, col_len, user_id
+                )
+                SELECT 
+                    name_element, type_element, math_element, msg_element,
+                    value_element, select_element, str_element, e_col, e_row,
+                    section, col_len, ? as user_id
+                FROM forms_tab 
+                WHERE user_id = 0
+            """, (user_id,))
             
-        # Copia registros do user_id 0 mantendo a seção original
-        cursor.execute("""
-            INSERT INTO forms_tab (
-                name_element, type_element, math_element, msg_element,
-                value_element, select_element, str_element, e_col, e_row,
-                section, user_id
-            )
-            SELECT 
-                name_element, type_element, math_element, msg_element,
-                value_element, select_element, str_element, e_col, e_row,
-                section, ? as user_id
-            FROM forms_tab 
-            WHERE user_id = 0
-        """, (user_id,))
-        
-        st.success(f"Registros iniciais criados para o usuário {user_id}")
+            st.success(f"Registros iniciais criados para o usuário {user_id}")
         
     except Exception as e:
         st.error(f"Erro ao criar registros para novo usuário: {str(e)}")
@@ -290,9 +303,9 @@ def process_forms_tab(section='cafe'):
         
         # Títulos com estilo baseados na seção
         titles = {
-            'cafe': "## Página de Entrada de Dados - Tipo do Café",
-            'moagem': "## Página de Entrada de Dados - Moagem e Torrefação",
-            'embalagem': "## Página de Entrada de Dados - Embalagem"
+            'cafe': "## Entrada de Dados - Café",
+            'moagem': "## Entrada de Dados - Torrefação e Moagem",
+            'embalagem': "## Entrada de Dados - Embalagem"
         }
         st.markdown(titles.get(section, "## Página de Entrada de Dados"))
         
@@ -311,7 +324,8 @@ def process_forms_tab(section='cafe'):
         # 4. Busca dados específicos do usuário logado e da seção atual
         cursor.execute("""
             SELECT name_element, type_element, math_element, msg_element,
-                   value_element, select_element, str_element, e_col, e_row
+                   value_element, select_element, str_element, e_col, e_row,
+                   col_len  -- Adicionando col_len na query
             FROM forms_tab
             WHERE user_id = ? AND section = ?
             ORDER BY e_row, e_col
@@ -335,29 +349,74 @@ def process_forms_tab(section='cafe'):
         for row_num in sorted(rows.keys()):
             row_elements = rows[row_num]
             
-            # Verifica se é uma linha de espaçamento - type element = pula_linha
-            if any(element[1] == 'pula_linha' for element in row_elements):
+            # Filtra elementos visíveis
+            visible_elements = [e for e in row_elements if not e[1].endswith('H')]
+            if not visible_elements:
+                continue
+                
+            # Verifica se é uma linha de espaçamento
+            if any(element[1] == 'pula_linha' for element in visible_elements):
                 st.markdown("<br>", unsafe_allow_html=True)
                 continue
             
-            # Layout com colunas
-            cols = st.columns(MAX_COLUMNS)
-            
-            for element in row_elements:
-                name = element[0]
-                type_elem = element[1]
-                math_elem = element[2]
+            # Caso especial: título verde ocupando toda a largura
+            if len(visible_elements) == 1 and visible_elements[0][1] == 'titulo':
+                element = visible_elements[0]
                 msg = element[3]
-                value = element[4]
-                select_options = element[5]
-                str_value = element[6]
-                e_col = element[7] - 1  # Ajusta para índice 0-4
+                col_len = int(element[9]) if element[9] is not None else 1
                 
-                # Verifica se a coluna está dentro do limite
-                if e_col >= MAX_COLUMNS:
-                    continue  # Pula silenciosamente elementos fora do limite
+                if 'background-color:#006400' in msg:
+                    # Cria colunas mantendo a proporção dentro do MAX_COLUMNS
+                    widths = [1] * MAX_COLUMNS  # Lista com 5 colunas de largura 1
+                    widths[0] = col_len  # Primeira coluna com largura col_len
+                    widths[col_len:] = [0] * (MAX_COLUMNS - col_len)  # Zera as colunas não usadas
+                    
+                    cols = st.columns(widths)
+                    with cols[0]:
+                        st.markdown(msg, unsafe_allow_html=True)
+                    continue
+            
+            # Para os elementos normais
+            # Calcula o total de colunas necessário baseado em col_len
+            total_cols = 0
+            for element in visible_elements:
+                col_len = int(element[9]) if element[9] is not None else 1
+                total_cols += col_len
 
-                with cols[e_col]:
+            # Cria lista de larguras relativas respeitando MAX_COLUMNS
+            column_widths = []
+            remaining_cols = MAX_COLUMNS
+
+            for element in visible_elements:
+                col_len = int(element[9]) if element[9] is not None else 1
+                # Ajusta a largura para não ultrapassar o espaço restante
+                actual_width = min(col_len, remaining_cols)
+                column_widths.append(actual_width)
+                remaining_cols -= actual_width
+
+            # Adiciona colunas vazias se necessário
+            if remaining_cols > 0:
+                column_widths.append(remaining_cols)
+
+            # Cria todas as colunas de uma vez com suas larguras relativas
+            cols = st.columns(column_widths)
+            
+            # Processa os elementos dentro das colunas
+            for idx, element in enumerate(visible_elements):
+                with cols[idx]:
+                    name = element[0]
+                    type_elem = element[1]
+                    math_elem = element[2]
+                    msg = element[3]
+                    value = element[4]
+                    select_options = element[5]
+                    str_value = element[6]
+                    e_col = element[7] - 1  # Ajusta para índice 0-4
+                    
+                    # Verifica se a coluna está dentro do limite
+                    if e_col >= MAX_COLUMNS:
+                        continue  # Pula silenciosamente elementos fora do limite
+
                     try:
                         # Processa elementos do tipo título
                         if type_elem == 'titulo':
@@ -395,11 +454,14 @@ def process_forms_tab(section='cafe'):
                         # Processamento normal para elementos visíveis
                         if type_elem == 'selectbox':
                             options = [opt.strip() for opt in select_options.split('|')]
+                            # Usa o nome do elemento como label se msg estiver vazio
+                            display_msg = msg if msg.strip() else name
                             selected = st.selectbox(
-                                msg,
+                                display_msg,
                                 options=options,
                                 key=f"select_{name}_{row_num}_{e_col}",
-                                index=options.index(str_value) if str_value in options else 0
+                                index=options.index(str_value) if str_value in options else 0,
+                                label_visibility="collapsed" if not msg.strip() else "visible"
                             )
                             
                             if selected != str_value:
@@ -456,10 +518,13 @@ def process_forms_tab(section='cafe'):
                                 else:
                                     current_value = "0,00"
                                 
+                                # Usa o nome do elemento como label se msg estiver vazio
+                                display_msg = msg if msg.strip() else name
                                 input_value = st.text_input(
-                                    msg,
+                                    display_msg,
                                     value=current_value,
-                                    key=f"input_{name}_{row_num}_{e_col}"
+                                    key=f"input_{name}_{row_num}_{e_col}",
+                                    label_visibility="collapsed" if not msg.strip() else "visible"
                                 )
                                 
                                 try:
