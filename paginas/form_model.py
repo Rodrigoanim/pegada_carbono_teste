@@ -1,8 +1,89 @@
 # Arquivo: form_model.py
-# CursorAI - claude 3.5 sonnet 
-# Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
-# ajustes de texto Anna
-# 24/02/2025 - col_len - 99% OK
+# type formula font attribute - somente inteiros
+# 26/02/2025 - 11:00
+
+# Form Model - Sistema de Formulários Dinâmicos
+# ===========================================
+#
+# Este módulo implementa um sistema de formulários dinâmicos baseado em dados do SQLite,
+# simulando uma estrutura similar a planilhas Excel.
+#
+# Estrutura da Tabela forms_tab
+# ----------------------------
+# Colunas principais:
+# - name_element: Identificador único do elemento (ex: 'B9', 'C789')
+# - type_element: Tipo do elemento ('titulo', 'input', 'formula', etc.)
+# - math_element: Fórmula ou expressão matemática
+# - msg_element: Mensagem/texto a ser exibido
+# - value_element: Valor numérico
+# - select_element: Opções para elementos do tipo select
+# - str_element: Elemento HTML formatado ou valor string
+# - e_col: Número da coluna (1-5)
+# - e_row: Número da linha
+# - section: Seção do formulário ('cafe', 'moagem', 'embalagem')
+# - col_len: Largura do elemento em colunas
+# - user_id: ID do usuário
+#
+# Tipos de Elementos
+# ----------------
+# titulo:
+#     Exibe texto formatado com estilos HTML personalizados.
+#     - msg_element: texto alternativo (usado em substituições)
+#     - str_element: HTML completo no formato:
+#         <div style='[estilos CSS]'>[texto]</div>
+#    
+#     Exemplo de str_element:
+#     <div style='
+#         background-color:#f0f0f0;
+#         padding:10px;
+#         border-radius:5px;
+#         color:#ff0000;
+#         font-size:16px;
+#     '>Recomenda-se utilizar dados anuais ou, no mínimo, semestrais</div>
+#
+#     Casos especiais:
+#     1. Mensagem de sucesso:
+#        - Detecta e substitui '✅ Operação concluída com sucesso!'
+#        - Usa msg_element como texto substituto
+#    
+#     2. Estilos comuns:
+#        - Alerta vermelho: color:#ff0000
+#        - Destaque verde: background-color:#006400;color:#FFFFFF
+#        - Texto normal: color:#1E1E1E
+#        - Tamanhos: font-size:[12|16|20|24]px
+#
+# Uso da Função titulo()
+# --------------------
+# A função processa elementos do tipo 'titulo', exibindo texto formatado:
+#
+# 1. Caso padrão:
+#    - Exibe o HTML completo do str_element
+#   
+# 2. Caso de substituição:
+#    - Se encontrar '✅ Operação concluída com sucesso!'
+#    - Substitui pelo texto do msg_element
+#   
+# 3. Outros casos:
+#    - Se str_value existe e não contém "Operação concluída"
+#      - Exibe str_value e msg separadamente
+#    - Caso contrário
+#      - Exibe apenas msg
+#
+# Exemplo de uso:
+# element = (
+#     'B9',           # name_element
+#     'titulo',       # type_element
+#     None,           # math_element
+#     'Novo texto',   # msg_element
+#     None,           # value_element
+#     None,           # select_element
+#     '<div style="color:red">Texto antigo</div>',  # str_element
+#     2,              # e_col
+#     1,              # e_row
+#     'cafe',         # section
+#     1               # col_len
+# )
+# titulo(cursor, element)
 
 import sqlite3
 import streamlit as st
@@ -303,11 +384,24 @@ def process_forms_tab(section='cafe'):
         
         # Títulos com estilo baseados na seção
         titles = {
-            'cafe': "## Entrada de Dados - Café",
-            'moagem': "## Entrada de Dados - Torrefação e Moagem",
-            'embalagem': "## Entrada de Dados - Embalagem"
+            'cafe': "Entrada de Dados - Café",
+            'moagem': "Entrada de Dados - Torrefação e Moagem",
+            'embalagem': "Entrada de Dados - Embalagem"
         }
-        st.markdown(titles.get(section, "## Página de Entrada de Dados"))
+        
+        title_text = titles.get(section, "Página de Entrada de Dados")
+        st.markdown(f"""
+            <p style='
+                text-align: left;
+                font-size: 28px;
+                font-weight: bold;
+                color: #1E1E1E;
+                margin: 15px 0;
+                padding: 10px;
+                background-color: #FFFFFF;
+                border-radius: 5px;
+            '>{title_text}</p>
+        """, unsafe_allow_html=True)
         
         # Inicializa session_state
         if 'form_values' not in st.session_state:
@@ -562,52 +656,50 @@ def process_forms_tab(section='cafe'):
 
                         elif type_elem == 'formula':
                             try:
-                                # Configurações de estilo para métricas
-                                FONT_SIZES = {
-                                    'small': '12px',
-                                    'medium': '16px',
-                                    'large': '20px',
-                                    'xlarge': '24px'
-                                }
+                                # Calcula o resultado da fórmula
+                                result = calculate_formula(element[2], st.session_state.form_values, cursor)
                                 
-                                msg_parts = msg.split('|')
-                                display_msg = msg_parts[0].strip()
-                                font_size = 'medium'
+                                # Formata o resultado baseado no valor
+                                if result >= 0:
+                                    result_br = f"{result:.0f}".replace('.', ',')  # Sem casas decimais
+                                else:
+                                    result_br = f"{result:.3f}".replace('.', ',')  # 3 casas decimais
                                 
-                                if len(msg_parts) > 1:
-                                    for param in msg_parts[1:]:
-                                        if param.startswith('size:'):
-                                            requested_size = param.split(':')[1].strip()
-                                            if requested_size in FONT_SIZES:
-                                                font_size = requested_size
-
-                                result = calculate_formula(math_elem, st.session_state.form_values, cursor)
+                                # Limpa as aspas do str_value antes de usar
+                                str_value = element[6]
+                                if str_value:
+                                    str_value = str_value.strip('"').strip("'")  # Remove aspas simples e duplas
                                 
-                                # Atualiza o banco com valor REAL
+                                # Limpa as aspas da mensagem também
+                                if msg:
+                                    msg = msg.strip('"').strip("'")
+                                
+                                # Se não houver estilo definido, usa o padrão
+                                if not str_value:
+                                    str_value = '<div style="text-align: left; font-size: 16px; margin-bottom: 0;">[valor]</div>'
+                                
+                                # Substitui o placeholder pelo valor calculado
+                                formatted_html = str_value.replace('[valor]', result_br)
+                                
+                                # Se houver mensagem de título
+                                if msg:
+                                    st.markdown(msg, unsafe_allow_html=True)
+                                    st.empty()
+                                
+                                # Limpa o HTML final e renderiza
+                                formatted_html = formatted_html.strip()
+                                st.markdown(formatted_html, unsafe_allow_html=True)
+                                
+                                # Atualiza o valor no banco (valor original, sem formatação)
                                 cursor.execute("""
                                     UPDATE forms_tab 
                                     SET value_element = ? 
                                     WHERE name_element = ? AND user_id = ?
                                 """, (result, name, st.session_state.user_id))
-                                conn.commit()
                                 
-                                # Ajusta casas decimais baseado no valor
-                                if abs(result) < 1 and result != 0:
-                                    result_br = f"{result:.6f}".replace('.', ',')
-                                else:
-                                    result_br = f"{result:.2f}".replace('.', ',')
-                                
-                                st.markdown(f"""
-                                    <div style='text-align: left;'>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; margin-bottom: 0;'>{display_msg}</p>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; font-weight: bold;'>{result_br}</p>
-                                    </div>
-                                    """, 
-                                    unsafe_allow_html=True
-                                )
-
                             except Exception as e:
                                 st.error(f"Erro ao processar fórmula: {str(e)}")
+                                return 0.0
 
                         elif type_elem == 'condicao':
                             try:
@@ -670,7 +762,6 @@ def process_forms_tab(section='cafe'):
                                 if not re.match(date_pattern, input_value):
                                     st.error(f"Por favor, insira a data no formato dd/mm/aaaa em {msg}")
                                 else:
-                                    # Validação adicional dos valores da data
                                     try:
                                         dia, mes, ano = map(int, input_value.split('/'))
                                         # Verifica se é uma data válida
@@ -680,70 +771,29 @@ def process_forms_tab(section='cafe'):
                                             (mes == 2 and dia > 29)):
                                             st.error(f"Data inválida em {msg}")
                                         else:
+                                            # Calcula dias desde 01/01/1900
+                                            days_since_1900 = date_to_days(input_value)
+                                            
                                             # Atualiza o banco apenas se o valor mudou
                                             if input_value != current_value:
                                                 cursor.execute("""
                                                     UPDATE forms_tab 
-                                                    SET str_element = ? 
+                                                    SET str_element = ?,
+                                                        value_element = ? 
                                                     WHERE name_element = ? AND user_id = ?
-                                                """, (input_value, name, st.session_state.user_id))
+                                                """, (input_value, days_since_1900, name, st.session_state.user_id))
                                                 conn.commit()
                                                 st.rerun()
+                                            
+                                            # Atualiza o form_values com o número de dias
+                                            st.session_state.form_values[name] = days_since_1900
+                                            
                                     except ValueError:
                                         st.error(f"Data inválida em {msg}")
-                            
-                            # Mantém o value_element como 0 já que não é usado para datas
-                            st.session_state.form_values[name] = '0.0'
 
                         elif type_elem == 'formula_data':
-                            try:
-                                # Configurações de estilo para métricas
-                                FONT_SIZES = {
-                                    'small': '12px',    # Fonte pequena
-                                    'medium': '16px',   # Fonte média (padrão)
-                                    'large': '20px',    # Fonte grande
-                                    'xlarge': '24px'    # Fonte extra grande
-                                }
-                                
-                                # Extrai o tamanho da fonte do msg_element (se existir)
-                                msg_parts = msg.split('|')
-                                display_msg = msg_parts[0].strip()
-                                font_size = 'medium'  # Tamanho padrão
-                                
-                                # Processa parâmetros adicionais
-                                if len(msg_parts) > 1:
-                                    for param in msg_parts[1:]:
-                                        if param.startswith('size:'):
-                                            requested_size = param.split(':')[1].strip()
-                                            if requested_size in FONT_SIZES:
-                                                font_size = requested_size
-
-                                # Calcula o resultado da fórmula de data
-                                result = calculate_formula(math_elem, st.session_state.form_values, cursor)
-                                
-                                # Converte resultado para formato BR antes de salvar
-                                result_br = f"{result:.0f}".replace('.', ',')
-                                
-                                # Atualiza o value_element no banco
-                                cursor.execute("""
-                                    UPDATE forms_tab 
-                                    SET value_element = ? 
-                                    WHERE name_element = ? AND user_id = ?
-                                """, (result_br, name, st.session_state.user_id))
-                                conn.commit()
-                                
-                                # Aplica estilo customizado usando HTML/CSS
-                                st.markdown(f"""
-                                    <div style='text-align: left;'>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; margin-bottom: 0;'>{display_msg}</p>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; font-weight: bold;'>{result_br}</p>
-                                    </div>
-                                    """, 
-                                    unsafe_allow_html=True
-                                )
-
-                            except Exception as e:
-                                st.error(f"Erro ao processar fórmula de data: {str(e)}")
+                            # Desabilitado - não faz nada
+                            pass
 
                     except Exception as e:
                         st.error(f"Erro ao processar {name}: {str(e)}")
@@ -823,4 +873,60 @@ def call_insumos(cursor, element):
         return 0.0
     except Exception as e:
         st.error(f"Erro inesperado ao processar referência: {str(e)}")
+        return 0.0
+
+def formula(cursor, element):
+    """
+    Exibe elementos do tipo 'formula' com estilos definidos no str_element.
+    
+    Esta função lida com o timing de renderização do Streamlit para garantir
+    que os estilos sejam aplicados corretamente. As pausas estratégicas (st.empty())
+    são necessárias devido à natureza assíncrona do Streamlit e como ele processa
+    elementos HTML.
+    
+    Parâmetros:
+        cursor: Cursor do banco de dados SQLite
+        element: Tupla contendo os dados do elemento (name, type, math, msg, etc.)
+    """
+    try:
+        name = element[0]
+        msg = element[3].strip("'").strip('"') if element[3] else ''
+        
+        # Limpa as aspas extras do str_element
+        str_value = element[6]
+        if str_value:
+            str_value = str_value.strip('"""').strip("'''").strip('"').strip("'")
+        
+        # Calcula o resultado da fórmula
+        result = calculate_formula(element[2], st.session_state.form_values, cursor)
+        result_br = f"{result:.2f}".replace('.', ',')
+        
+        # Se não houver estilo definido, usa o padrão
+        if not str_value:
+            str_value = '<div style="text-align: left; font-size: 16px; margin-bottom: 0;">[valor]</div>'
+        
+        # Garante que elementos anteriores foram renderizados
+        st.empty()
+        
+        # Substitui o placeholder pelo valor calculado
+        formatted_html = str_value.replace('[valor]', result_br)
+        
+        # Se houver mensagem de título
+        if msg:
+            st.markdown(msg, unsafe_allow_html=True)
+            st.empty()
+        
+        # Limpa o HTML final e renderiza
+        formatted_html = formatted_html.strip()
+        st.markdown(formatted_html, unsafe_allow_html=True)
+        
+        # Atualiza o valor no banco
+        cursor.execute("""
+            UPDATE forms_tab 
+            SET value_element = ? 
+            WHERE name_element = ? AND user_id = ?
+        """, (result, name, st.session_state.user_id))
+        
+    except Exception as e:
+        st.error(f"Erro ao processar fórmula: {str(e)}")
         return 0.0

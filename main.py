@@ -3,8 +3,9 @@
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
 # botão para zerar os dados do formulário
-# 24/02/2025 - Hora: 14H00
+# 25/02/2025 - Hora: 14H35
 # ajustes de texto Anna
+# transformando resultados.py em uma função para várias tabelas
 
 import streamlit as st
 import sqlite3
@@ -360,21 +361,24 @@ def main():
         show_welcome()
     elif section in ["Tipo do Café", "Moagem e Torrefação", "Embalagem"]:
         process_forms_tab(section_map[section])
-    elif section == "da Empresa":
-        from paginas.resultados import show_results
-        show_results()
-    elif section == "da Empresa sem Etapa Agrícola":  # Updated from "Resultados SEA"
-        from paginas.result_sea import show_results
-        show_results()
-    elif section == "Comparação Setorial":
-        from paginas.result_setorial import show_results
-        show_results()
-    elif section == "Comparação Setorial SEA":
-        from paginas.result_setorial_sea import show_results
-        show_results()
+    elif section in [
+        "da Empresa",
+        "da Empresa sem Etapa Agrícola",
+        "Comparação Setorial",
+        "Comparação Setorial SEA"
+    ]:
+        # Mapeamento de seções para títulos completos
+        section_to_title = {
+            "da Empresa": "Simulações da Empresa",
+            "da Empresa sem Etapa Agrícola": "Simulações da Empresa Sem Etapa Agrícola",
+            "Comparação Setorial": "Simulações - Comparação Setorial",
+            "Comparação Setorial SEA": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+        }
+        # Passa o título completo para show_page
+        show_page(selected_simulation=section_to_title[section])
     elif section == "Análise Energética - Torrefação":
-        from paginas.result_energetica import show_results
-        show_results()
+        from paginas.result_energetica import show_results as show_energetica
+        show_energetica()
     elif section == "Info Tabelas (CRUD)":
         from paginas.crude import show_crud
         show_crud()
@@ -386,6 +390,52 @@ def main():
         show_diagnostics()
     elif section == "Zerar Valores":
         zerar_value_element()
+
+def show_page(selected_simulation=None):
+    """
+    Gerencia a exibição das páginas de simulação
+    Args:
+        selected_simulation: Título da simulação selecionada
+    """
+    # Mapeamento de páginas para tabelas e títulos
+    PAGES_CONFIG = {
+        "Simulações da Empresa": {
+            "tabela": "forms_resultados",
+            "titulo": "Simulações da Empresa"
+        },
+        "Simulações da Empresa Sem Etapa Agrícola": {
+            "tabela": "forms_result_sea",
+            "titulo": "Simulações da Empresa Sem Etapa Agrícola"
+        },
+        "Simulações - Comparação Setorial": {
+            "tabela": "forms_setorial",
+            "titulo": "Simulações - Comparação Setorial"
+        },
+        "Simulações - Comparação Setorial Sem Etapa Agrícola": {
+            "tabela": "forms_setorial_sea",
+            "titulo": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+        }
+    }
+
+    # Verifica se usuário está logado
+    if "user_id" not in st.session_state:
+        st.warning("Por favor, faça login para continuar.")
+        return
+
+    # Usa a simulação passada ou permite seleção via selectbox
+    if selected_simulation and selected_simulation in PAGES_CONFIG:
+        page_config = PAGES_CONFIG[selected_simulation]
+    else:
+        st.error("Simulação não encontrada")
+        return
+    
+    # Chama a função show_results com os parâmetros apropriados
+    from paginas.resultados import show_results
+    show_results(
+        tabela_escolhida=page_config["tabela"],
+        titulo_pagina=page_config["titulo"],
+        user_id=st.session_state.user_id
+    )
 
 def save_current_form_data():
     """Salva os dados do formulário atual quando houver mudança de página"""
