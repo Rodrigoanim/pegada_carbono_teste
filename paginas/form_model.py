@@ -1,99 +1,19 @@
 # Arquivo: form_model.py
 # type formula font attribute - somente inteiros
-# 26/02/2025 - 11:00
+# 27/02/2025 - 11:00 - alterado para calcular o valor do insumo sem usr a tabela forms_insumos
 
-# Form Model - Sistema de Formulários Dinâmicos
-# ===========================================
-#
-# Este módulo implementa um sistema de formulários dinâmicos baseado em dados do SQLite,
-# simulando uma estrutura similar a planilhas Excel.
-#
-# Estrutura da Tabela forms_tab
-# ----------------------------
-# Colunas principais:
-# - name_element: Identificador único do elemento (ex: 'B9', 'C789')
-# - type_element: Tipo do elemento ('titulo', 'input', 'formula', etc.)
-# - math_element: Fórmula ou expressão matemática
-# - msg_element: Mensagem/texto a ser exibido
-# - value_element: Valor numérico
-# - select_element: Opções para elementos do tipo select
-# - str_element: Elemento HTML formatado ou valor string
-# - e_col: Número da coluna (1-5)
-# - e_row: Número da linha
-# - section: Seção do formulário ('cafe', 'moagem', 'embalagem')
-# - col_len: Largura do elemento em colunas
-# - user_id: ID do usuário
-#
-# Tipos de Elementos
-# ----------------
-# titulo:
-#     Exibe texto formatado com estilos HTML personalizados.
-#     - msg_element: texto alternativo (usado em substituições)
-#     - str_element: HTML completo no formato:
-#         <div style='[estilos CSS]'>[texto]</div>
-#    
-#     Exemplo de str_element:
-#     <div style='
-#         background-color:#f0f0f0;
-#         padding:10px;
-#         border-radius:5px;
-#         color:#ff0000;
-#         font-size:16px;
-#     '>Recomenda-se utilizar dados anuais ou, no mínimo, semestrais</div>
-#
-#     Casos especiais:
-#     1. Mensagem de sucesso:
-#        - Detecta e substitui '✅ Operação concluída com sucesso!'
-#        - Usa msg_element como texto substituto
-#    
-#     2. Estilos comuns:
-#        - Alerta vermelho: color:#ff0000
-#        - Destaque verde: background-color:#006400;color:#FFFFFF
-#        - Texto normal: color:#1E1E1E
-#        - Tamanhos: font-size:[12|16|20|24]px
-#
-# Uso da Função titulo()
-# --------------------
-# A função processa elementos do tipo 'titulo', exibindo texto formatado:
-#
-# 1. Caso padrão:
-#    - Exibe o HTML completo do str_element
-#   
-# 2. Caso de substituição:
-#    - Se encontrar '✅ Operação concluída com sucesso!'
-#    - Substitui pelo texto do msg_element
-#   
-# 3. Outros casos:
-#    - Se str_value existe e não contém "Operação concluída"
-#      - Exibe str_value e msg separadamente
-#    - Caso contrário
-#      - Exibe apenas msg
-#
-# Exemplo de uso:
-# element = (
-#     'B9',           # name_element
-#     'titulo',       # type_element
-#     None,           # math_element
-#     'Novo texto',   # msg_element
-#     None,           # value_element
-#     None,           # select_element
-#     '<div style="color:red">Texto antigo</div>',  # str_element
-#     2,              # e_col
-#     1,              # e_row
-#     'cafe',         # section
-#     1               # col_len
-# )
-# titulo(cursor, element)
 
 import sqlite3
 import streamlit as st
 import pandas as pd
 import re
+# import logging
 
 from config import DB_PATH
 from paginas.monitor import registrar_acesso  # Ajustado para incluir o caminho completo
 
 MAX_COLUMNS = 5  # Número máximo de colunas no layout
+
 
 def date_to_days(date_str):
     """
@@ -239,67 +159,89 @@ def calculate_formula(formula, values, cursor):
         st.error(f"Erro no cálculo da fórmula: {str(e)}")
         return 0.0
 
-def process_conditional_element(cursor, element):
+def condicaoH(cursor, element, conn):
     """
-    Processa elemento do tipo 'condicao' seguindo a lógica especificada.
+    Atualiza o value_element baseado em um valor de referência e mapeamento.
     """
+    print(f"\nCondicaoH chamada para elemento: {element[0]}")  # Debug
+    
     try:
-        name = element[0]
-        math_ref = element[2]
-        select_pairs = element[5]
+        # Extrai informações da linha atual
+        name_element = element[1]  # D151, D152, etc
+        math_ref = element[3]      # D15 (vem da coluna math_element)
+        select_options = element[6] # String com mapeamento (vem da coluna str_element)
         
+        print(f"  math_ref: {math_ref}")  # Debug
+        print(f"  select_options: {select_options}")  # Debug
+        
+        # 1. Validações iniciais
+        if not all([name_element, math_ref, select_options]):
+            print("  Erro: dados incompletos")  # Debug
+            return False
+            
+        # 2. Busca str_element da referência
         cursor.execute("""
             SELECT str_element 
             FROM forms_tab 
             WHERE name_element = ? AND user_id = ?
         """, (math_ref, st.session_state.user_id))
         
-        ref_result = cursor.fetchone()
-        if not ref_result or not ref_result[0]:
-            return 0.0
+        result = cursor.fetchone()
+        if not result or result[0] is None:
+            print("  Erro: str_element não encontrado")  # Debug
+            return False
             
-        selected_value = ref_result[0].strip()
-        pairs = [pair.strip() for pair in select_pairs.split('|')]
+        str_ref = result[0].strip()  # Remove espaços extras
+        print(f"  str_ref encontrado: {str_ref}")  # Debug
         
-        for pair in pairs:
-            condition, target = pair.split(':')
-            condition = condition.strip()
-            target = target.strip()
+        # 3. Processa mapeamento do select_options
+        try:
+            # Remove aspas duplas do início e fim do select_options
+            select_options = select_options.strip('"')
             
-            if condition == selected_value:
-                cursor.execute("""
-                    SELECT math_element 
-                    FROM forms_insumos 
-                    WHERE name_element = ?
-                """, (target,))
+            # Divide os pares de valores
+            mapeamento = {}
+            for par in select_options.split('|'):
+                if ':' in par:
+                    chave, valor = par.split(':')
+                    chave = chave.strip()  # Remove espaços extras da chave
+                    valor = valor.strip()  # Remove espaços extras do valor
+                    mapeamento[chave] = float(valor)
+            
+            print(f"  Mapeamento: {mapeamento}")  # Debug
+            
+            # Busca valor correspondente
+            if str_ref in mapeamento:
+                valor_encontrado = mapeamento[str_ref]
+                print(f"  Valor encontrado: {valor_encontrado}")  # Debug
                 
-                result = cursor.fetchone()
-                if result and result[0]:
-                    try:
-                        math_value = result[0]
-                        if '/' in math_value:
-                            num, den = map(float, math_value.split('/'))
-                            final_value = num / den
-                        else:
-                            final_value = float(math_value)
-                        
-                        # Atualiza o banco com valor REAL
-                        cursor.execute("""
-                            UPDATE forms_tab 
-                            SET value_element = ? 
-                            WHERE name_element = ? AND user_id = ?
-                        """, (final_value, name, st.session_state.user_id))
-                        
-                        return final_value
-                        
-                    except ValueError:
-                        return 0.0
-                    
-        return 0.0
+                # 4. Atualiza o banco
+                cursor.execute("""
+                    UPDATE forms_tab 
+                    SET value_element = ?
+                    WHERE name_element = ? AND user_id = ?
+                """, (valor_encontrado, name_element, st.session_state.user_id))
+                
+                conn.commit()
+                return True
+            
+            print(f"  Erro: str_ref '{str_ref}' não encontrado no mapeamento")  # Debug
+            return False
+            
+        except ValueError:
+            print("  Erro: ValueError ao processar valores")  # Debug
+            return False
+            
+        except sqlite3.Error:
+            print("  Erro: Erro no banco de dados")  # Debug
+            conn.rollback()
+            return False
         
     except Exception as e:
-        st.error(f"Erro ao processar condição: {str(e)}")
-        return 0.0
+        print(f"  Erro inesperado: {str(e)}")  # Debug
+        if 'conn' in locals():
+            conn.rollback()
+        return False
 
 def titulo(cursor, element):
     """
@@ -419,7 +361,7 @@ def process_forms_tab(section='cafe'):
         cursor.execute("""
             SELECT name_element, type_element, math_element, msg_element,
                    value_element, select_element, str_element, e_col, e_row,
-                   col_len  -- Adicionando col_len na query
+                   col_len
             FROM forms_tab
             WHERE user_id = ? AND section = ?
             ORDER BY e_row, e_col
@@ -519,55 +461,84 @@ def process_forms_tab(section='cafe'):
 
                         # Processa elementos ocultos
                         if type_elem.endswith('H'):
-                            if type_elem == 'formulaH':
-                                result = calculate_formula(math_elem, st.session_state.form_values, cursor)
-                                cursor.execute("""
-                                    UPDATE forms_tab 
-                                    SET value_element = ? 
-                                    WHERE name_element = ? AND user_id = ?
-                                """, (result, name, st.session_state.user_id))
-                                conn.commit()
-                            elif type_elem == 'condicaoH':
-                                result = process_conditional_element(cursor, element)
-                                cursor.execute("""
-                                    UPDATE forms_tab 
-                                    SET value_element = ? 
-                                    WHERE name_element = ? AND user_id = ?
-                                """, (result, name, st.session_state.user_id))
-                                conn.commit()
-                            elif type_elem == 'call_insumosH':
-                                result = call_insumos(cursor, element)
-                                cursor.execute("""
-                                    UPDATE forms_tab 
-                                    SET value_element = ? 
-                                    WHERE name_element = ? AND user_id = ?
-                                """, (result, name, st.session_state.user_id))
-                                conn.commit()
-                            continue
+                            try:
+                                if type_elem == 'formulaH':
+                                    result = calculate_formula(math_elem, st.session_state.form_values, cursor)
+                                elif type_elem == 'condicaoH':
+                                    result = condicaoH(cursor, element, conn)
+                                elif type_elem == 'call_insumosH':
+                                    result = call_insumos(cursor, element)
 
-                        # Processamento normal para elementos visíveis
+                                # Atualiza o banco com o resultado
+                                if type_elem in ['formulaH', 'condicaoH', 'call_insumosH']:
+                                    cursor.execute("""
+                                        UPDATE forms_tab 
+                                        SET value_element = ? 
+                                        WHERE name_element = ? AND user_id = ?
+                                    """, (result, name, st.session_state.user_id))
+                                    conn.commit()
+                                continue
+
+                            except Exception as e:
+                                st.error(f"Falha ao processar elemento oculto {name}: {str(e)}")
+
+                        # Processamento normal para elementos visíveis - Selectbox
                         if type_elem == 'selectbox':
-                            options = [opt.strip() for opt in select_options.split('|')]
-                            # Usa o nome do elemento como label se msg estiver vazio
-                            display_msg = msg if msg.strip() else name
-                            selected = st.selectbox(
-                                display_msg,
-                                options=options,
-                                key=f"select_{name}_{row_num}_{e_col}",
-                                index=options.index(str_value) if str_value in options else 0,
-                                label_visibility="collapsed" if not msg.strip() else "visible"
-                            )
-                            
-                            if selected != str_value:
-                                cursor.execute("""
-                                    UPDATE forms_tab 
-                                    SET str_element = ? 
-                                    WHERE name_element = ? AND user_id = ?
-                                """, (selected, name, st.session_state.user_id))
-                                conn.commit()
-                                st.rerun()
-                            
-                            st.session_state.form_values[name] = 0.0
+                            try:
+                                # Validação das opções do select
+                                if not select_options:
+                                    st.error(f"Erro: Opções vazias para {name}")
+                                    continue
+                                
+                                options = [opt.strip() for opt in select_options.split('|')]
+                                display_msg = msg if msg.strip() else name
+                                initial_index = options.index(str_value) if str_value in options else 0
+                                
+                                # Renderiza o selectbox
+                                selected = st.selectbox(
+                                    display_msg,
+                                    options=options,
+                                    key=f"select_{name}_{row_num}_{e_col}",
+                                    index=initial_index,
+                                    label_visibility="collapsed" if not msg.strip() else "visible"
+                                )
+                                
+                                # Se o valor mudou, atualiza os elementos dependentes
+                                if selected != str_value:
+                                    try:
+                                        # Atualiza o próprio selectbox
+                                        cursor.execute("""
+                                            UPDATE forms_tab 
+                                            SET str_element = ?,
+                                                value_element = ?
+                                            WHERE name_element = ? 
+                                            AND user_id = ? 
+                                            AND section = ?
+                                        """, (selected, 0.0, name, st.session_state.user_id, section))
+                                        
+                                        # Busca elementos condicaoH que dependem deste selectbox
+                                        cursor.execute("""
+                                            SELECT * FROM forms_tab 
+                                            WHERE type_element = 'condicaoH' 
+                                            AND math_element = ? 
+                                            AND user_id = ?
+                                        """, (name, st.session_state.user_id))
+                                        
+                                        # Para cada elemento encontrado, chama condicaoH
+                                        for elemento in cursor.fetchall():
+                                            print(f"Elemento encontrado: {elemento}")  # Debug adicional
+                                            condicaoH(cursor, elemento, conn)
+                                        
+                                        conn.commit()
+                                    
+                                    except sqlite3.Error as e:
+                                        st.error(f"Erro no banco de dados: {str(e)}")
+                                        conn.rollback()
+
+                            except Exception as e:
+                                st.error(f"Erro no selectbox {name}: {str(e)}")
+                                if 'conn' in locals():
+                                    conn.rollback()
 
                         elif type_elem == 'call_insumos':
                             try:
@@ -701,48 +672,6 @@ def process_forms_tab(section='cafe'):
                                 st.error(f"Erro ao processar fórmula: {str(e)}")
                                 return 0.0
 
-                        elif type_elem == 'condicao':
-                            try:
-                                # Configurações de estilo para métricas
-                                FONT_SIZES = {
-                                    'small': '12px',    # Fonte pequena
-                                    'medium': '16px',   # Fonte média (padrão)
-                                    'large': '20px',    # Fonte grande
-                                    'xlarge': '24px'    # Fonte extra grande
-                                }
-                                
-                                # Extrai o tamanho da fonte do msg_element (se existir)
-                                # Formato esperado: "texto|size:small" ou apenas "texto"
-                                msg_parts = msg.split('|')
-                                display_msg = msg_parts[0].strip()
-                                font_size = 'medium'  # Tamanho padrão
-                                
-                                # Processa parâmetros adicionais
-                                if len(msg_parts) > 1:
-                                    for param in msg_parts[1:]:
-                                        if param.startswith('size:'):
-                                            requested_size = param.split(':')[1].strip()
-                                            if requested_size in FONT_SIZES:
-                                                font_size = requested_size
-
-                                # Processa o elemento condicional
-                                result = process_conditional_element(cursor, element)
-                                
-                                # Converte resultado para formato BR antes de salvar
-                                result_br = f"{result:.2f}".replace('.', ',')
-                                
-                                # Aplica estilo customizado usando HTML/CSS
-                                st.markdown(f"""
-                                    <div style='text-align: center;'>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; margin-bottom: 0;'>{display_msg}</p>
-                                        <p style='font-size: {FONT_SIZES[font_size]}; font-weight: bold;'>{result_br}</p>
-                                    </div>
-                                    """, 
-                                    unsafe_allow_html=True
-                                )
-
-                            except Exception as e:
-                                st.error(f"Erro ao processar condição: {str(e)}")
 
                         elif type_elem == 'input_data':
                             # Pega o valor atual do str_element
@@ -752,7 +681,8 @@ def process_forms_tab(section='cafe'):
                             input_value = st.text_input(
                                 msg,
                                 value=current_value,
-                                key=f"input_data_{name}_{row_num}_{e_col}"
+                                key=f"input_data_{name}_{row_num}_{e_col}",
+                                label_visibility="collapsed" if not msg.strip() else "visible"
                             )
                             
                             # Validação do formato da data

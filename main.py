@@ -1,11 +1,9 @@
 # Arquivo: main.py
-# Data: 22/02/2025 - Hora: 10H30
+# Data: 27/02/2025 - Hora: 08:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
-# botão para zerar os dados do formulário
-# 25/02/2025 - Hora: 14H35
+# botão para zerar dos type = input
 # ajustes de texto Anna
-# transformando resultados.py em uma função para várias tabelas
 
 import streamlit as st
 import sqlite3
@@ -196,7 +194,7 @@ def show_welcome():
         st.markdown(modulos_html, unsafe_allow_html=True)
 
 def zerar_value_element():
-    """Função para zerar todos os value_element do usuário logado na tabela forms_tab"""
+    """Função para zerar todos os value_element do usuário logado na tabela forms_tab onde type_element = 'input'"""
     # Inicializa o estado do checkbox se não existir
     if 'confirma_zeragem' not in st.session_state:
         st.session_state.confirma_zeragem = False
@@ -212,12 +210,13 @@ def zerar_value_element():
                 conn = sqlite3.connect(DB_PATH)
                 cursor = conn.cursor()
                 
-                # Atualiza value_element para 0.0
+                # Atualiza value_element para 0.0 apenas onde type_element = 'input'
                 cursor.execute("""
                     UPDATE forms_tab 
                     SET value_element = 0.0 
                     WHERE user_id = ? 
                     AND value_element IS NOT NULL
+                    AND type_element = 'input'
                 """, (st.session_state["user_id"],))
                 
                 registros_afetados = cursor.rowcount
@@ -324,12 +323,12 @@ def main():
     }
     
     # Adicionar opções administrativas na ordem desejada
-    if user_profile and user_profile.lower() in ["adm", "master"]:
-        menu_groups["Administração"].append("Monitor de Uso")
     if user_profile and user_profile.lower() == "master":
         menu_groups["Administração"].append("Info Tabelas (CRUD)")
     if user_profile and user_profile.lower() == "master":
         menu_groups["Administração"].append("Diagnóstico")
+    if user_profile and user_profile.lower() in ["adm", "master"]:
+        menu_groups["Administração"].append("Monitor de Uso")
     # Adicionar Zerar Valores por último
     menu_groups["Administração"].append("Zerar Valores")
     
