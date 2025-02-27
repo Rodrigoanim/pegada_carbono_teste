@@ -2,7 +2,6 @@
 # type formula font attribute - somente inteiros
 # 27/02/2025 - 11:00 - alterado para calcular o valor do insumo sem usr a tabela forms_insumos
 
-
 import sqlite3
 import streamlit as st
 import pandas as pd
@@ -163,7 +162,7 @@ def condicaoH(cursor, element, conn):
     """
     Atualiza o value_element baseado em um valor de referência e mapeamento.
     """
-    print(f"\nCondicaoH chamada para elemento: {element[0]}")  # Debug
+    # print(f"\nCondicaoH chamada para elemento: {element[0]}")  # Debug
     
     try:
         # Extrai informações da linha atual
@@ -171,12 +170,12 @@ def condicaoH(cursor, element, conn):
         math_ref = element[3]      # D15 (vem da coluna math_element)
         select_options = element[6] # String com mapeamento (vem da coluna str_element)
         
-        print(f"  math_ref: {math_ref}")  # Debug
-        print(f"  select_options: {select_options}")  # Debug
+        # print(f"  math_ref: {math_ref}")  # Debug
+        # print(f"  select_options: {select_options}")  # Debug
         
         # 1. Validações iniciais
         if not all([name_element, math_ref, select_options]):
-            print("  Erro: dados incompletos")  # Debug
+            # print("  Erro: dados incompletos")  # Debug
             return False
             
         # 2. Busca str_element da referência
@@ -188,11 +187,11 @@ def condicaoH(cursor, element, conn):
         
         result = cursor.fetchone()
         if not result or result[0] is None:
-            print("  Erro: str_element não encontrado")  # Debug
+            # print("  Erro: str_element não encontrado")  # Debug
             return False
             
         str_ref = result[0].strip()  # Remove espaços extras
-        print(f"  str_ref encontrado: {str_ref}")  # Debug
+        # print(f"  str_ref encontrado: {str_ref}")  # Debug
         
         # 3. Processa mapeamento do select_options
         try:
@@ -208,12 +207,12 @@ def condicaoH(cursor, element, conn):
                     valor = valor.strip()  # Remove espaços extras do valor
                     mapeamento[chave] = float(valor)
             
-            print(f"  Mapeamento: {mapeamento}")  # Debug
+            # print(f"  Mapeamento: {mapeamento}")  # Debug
             
             # Busca valor correspondente
             if str_ref in mapeamento:
                 valor_encontrado = mapeamento[str_ref]
-                print(f"  Valor encontrado: {valor_encontrado}")  # Debug
+                # print(f"  Valor encontrado: {valor_encontrado}")  # Debug
                 
                 # 4. Atualiza o banco
                 cursor.execute("""
@@ -225,20 +224,20 @@ def condicaoH(cursor, element, conn):
                 conn.commit()
                 return True
             
-            print(f"  Erro: str_ref '{str_ref}' não encontrado no mapeamento")  # Debug
+            # print(f"  Erro: str_ref '{str_ref}' não encontrado no mapeamento")  # Debug
             return False
             
         except ValueError:
-            print("  Erro: ValueError ao processar valores")  # Debug
+            # print("  Erro: ValueError ao processar valores")  # Debug
             return False
             
         except sqlite3.Error:
-            print("  Erro: Erro no banco de dados")  # Debug
+            # print("  Erro: Erro no banco de dados")  # Debug
             conn.rollback()
             return False
         
     except Exception as e:
-        print(f"  Erro inesperado: {str(e)}")  # Debug
+        # print(f"  Erro inesperado: {str(e)}")  # Debug
         if 'conn' in locals():
             conn.rollback()
         return False
@@ -526,7 +525,7 @@ def process_forms_tab(section='cafe'):
                                         
                                         # Para cada elemento encontrado, chama condicaoH
                                         for elemento in cursor.fetchall():
-                                            print(f"Elemento encontrado: {elemento}")  # Debug adicional
+                                            # print(f"Elemento encontrado: {elemento}")  # Debug adicional
                                             condicaoH(cursor, elemento, conn)
                                         
                                         conn.commit()
