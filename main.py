@@ -45,25 +45,25 @@ st.set_page_config(
 components.html(
     """
     <head>
-        <title>Simulador da Pegada de Carbono do Café</title>
+        <title>Simulador da Pegada de Carbono do Café Torrado/Moído</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Simulador oficial da ABIC para cálculo da pegada de carbono do café torrado/moído">
+        <meta name="description" content="Simulador da ABIC para cálculo da pegada de carbono do café torrado/moído">
         
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
-        <meta property="og:url" content="https://apc2.ag93app.com.br/">
+        <meta property="og:url" content="https://apc2.ag93app.com.br/?v=1.0">
         <meta property="og:title" content="Simulador da Pegada de Carbono do Café">
-        <meta property="og:description" content="Ferramenta oficial da ABIC para simulação da pegada de carbono do café torrado/moído">
-        <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+        <meta property="og:description" content="Ferramenta da ABIC para simulação da pegada de carbono do café torrado/moído">
+        <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg?v=1.0">
         <meta property="og:site_name" content="Simulador Pegada de Carbono">
         
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:url" content="https://apc2.ag93app.com.br/">
+        <meta name="twitter:url" content="https://apc2.ag93app.com.br/?v=1.0">
         <meta name="twitter:title" content="Simulador da Pegada de Carbono do Café">
-        <meta name="twitter:description" content="Ferramenta oficial da ABIC para simulação da pegada de carbono do café torrado/moído">
-        <meta name="twitter:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+        <meta name="twitter:description" content="Ferramenta da ABIC para simulação da pegada de carbono do café torrado/moído">
+        <meta name="twitter:image" content="https://ag93eventos.com.br/anim/pegada2.jpg?v=1.0">
         
         <!-- Adicional SEO -->
         <meta name="author" content="ABIC">
