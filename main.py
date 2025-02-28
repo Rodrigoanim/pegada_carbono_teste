@@ -14,6 +14,7 @@ import sys
 from config import DB_PATH, DATA_DIR  # Atualize a importação
 import os
 from paginas.monitor import registrar_acesso  # Adicione esta importação no topo do arquivo
+import streamlit.components.v1 as components
 
 # Adicione esta linha logo no início do arquivo, após os imports
 # os.environ['RENDER'] = 'true'
@@ -40,16 +41,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Adicionar metadados Open Graph logo após st.set_page_config - Redes Sociais
-st.markdown("""
-    <head>
-        <title>Simulador da Pegada de Carbono do Café</title>
-        <meta property="og:title" content="Simulador da Pegada de Carbono do Café"/>
-        <meta property="og:description" content="Sistema para simulação da pegada de carbono do café torrado/moído"/>
-        <meta property="og:image" content="pegada.jpg"/>
-        <meta property="og:url" content="https://apc2.ag93app.com.br/"/>
-    </head>
-""", unsafe_allow_html=True)
+# Adicionar metadados Open Graph usando components.v1.html
+components.html(
+    """
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Simulador Pegada de Carbono">
+    <meta property="og:title" content="Simulador da Pegada de Carbono do Café">
+    <meta property="og:description" content="Sistema para simulação da pegada de carbono do café torrado/moído">
+    <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+    <meta property="og:image:secure_url" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1009">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://apc2.ag93app.com.br/">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Simulador da Pegada de Carbono do Café">
+    <meta name="twitter:description" content="Sistema para simulação da pegada de carbono do café torrado/moído">
+    <meta name="twitter:image" content="https://apc2.ag93app.com.br/pegada.jpg">
+    """,
+    height=0,
+    width=0
+)
 
 def authenticate_user():
     """Autentica o usuário e verifica seu perfil no banco de dados."""
