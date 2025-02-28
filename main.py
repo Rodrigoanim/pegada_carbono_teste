@@ -1,5 +1,5 @@
 # Arquivo: main.py
-# Data: 27/02/2025 - Hora: 16:00
+# Data: 28/02/2025 - Hora: 11:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
 # botão para zerar dos type = input
@@ -21,6 +21,7 @@ from paginas.monitor import registrar_acesso  # Adicione esta importação no to
 # Configuração da página - deve ser a primeira chamada do Streamlit
 st.set_page_config(
     page_title="Simulador da Pegada de Carbono do Café Torrado/Moído",
+    page_icon="☕",  # Você pode usar um emoji ou caminho para uma imagem
     layout="wide",
     menu_items={
         'About': """
@@ -35,8 +36,20 @@ st.set_page_config(
         """,
         'Get Help': None,
         'Report a bug': None
-    }
+    },
+    initial_sidebar_state="expanded"
 )
+
+# Adicionar metadados Open Graph logo após st.set_page_config - Redes Sociais
+st.markdown("""
+    <head>
+        <title>Simulador da Pegada de Carbono do Café</title>
+        <meta property="og:title" content="Simulador da Pegada de Carbono do Café"/>
+        <meta property="og:description" content="Sistema para simulação da pegada de carbono do café torrado/moído"/>
+        <meta property="og:image" content="pegada.jpg"/>
+        <meta property="og:url" content="https://apc2.ag93app.com.br/"/>
+    </head>
+""", unsafe_allow_html=True)
 
 def authenticate_user():
     """Autentica o usuário e verifica seu perfil no banco de dados."""
@@ -71,7 +84,7 @@ def authenticate_user():
         """, unsafe_allow_html=True)
         
         # Login na sidebar
-        st.sidebar.title("Login - versão TSW.1")
+        st.sidebar.title("Login - versão TSW.1a")
         email = st.sidebar.text_input("E-mail", key="email")
         password = st.sidebar.text_input("Senha", type="password", key="password", on_change=lambda: st.session_state.update({"enter_pressed": True}) if "password" in st.session_state else None)
         
