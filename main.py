@@ -21,8 +21,8 @@ import streamlit.components.v1 as components
 
 # Configuração da página - deve ser a primeira chamada do Streamlit
 st.set_page_config(
-    page_title="Simulador da Pegada de Carbono do Café Torrado/Moído",
-    page_icon="☕",  # Você pode usar um emoji ou caminho para uma imagem
+    page_title="Simulador da Pegada de Carbono do Café",  # Título simplificado
+    page_icon="☕",
     layout="wide",
     menu_items={
         'About': """
@@ -41,26 +41,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Adicionar metadados Open Graph usando components.v1.html
+# Atualizar metadados Open Graph com informações mais específicas
 components.html(
     """
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Simulador Pegada de Carbono">
-    <meta property="og:title" content="Simulador da Pegada de Carbono do Café">
-    <meta property="og:description" content="Sistema para simulação da pegada de carbono do café torrado/moído">
-    <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
-    <meta property="og:image:secure_url" content="https://ag93eventos.com.br/anim/pegada2.jpg">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1009">
-    <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://apc2.ag93app.com.br/">
-    
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Simulador da Pegada de Carbono do Café">
-    <meta name="twitter:description" content="Sistema para simulação da pegada de carbono do café torrado/moído">
-    <meta name="twitter:image" content="https://apc2.ag93app.com.br/pegada.jpg">
+    <head>
+        <title>Simulador da Pegada de Carbono do Café</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Simulador oficial da ABIC para cálculo da pegada de carbono do café torrado/moído">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://apc2.ag93app.com.br/">
+        <meta property="og:title" content="Simulador da Pegada de Carbono do Café">
+        <meta property="og:description" content="Ferramenta oficial da ABIC para simulação da pegada de carbono do café torrado/moído">
+        <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+        <meta property="og:site_name" content="Simulador Pegada de Carbono">
+        
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="https://apc2.ag93app.com.br/">
+        <meta name="twitter:title" content="Simulador da Pegada de Carbono do Café">
+        <meta name="twitter:description" content="Ferramenta oficial da ABIC para simulação da pegada de carbono do café torrado/moído">
+        <meta name="twitter:image" content="https://ag93eventos.com.br/anim/pegada2.jpg">
+        
+        <!-- Adicional SEO -->
+        <meta name="author" content="ABIC">
+        <meta name="keywords" content="café, pegada de carbono, sustentabilidade, ABIC, café torrado, café moído">
+        <link rel="canonical" href="https://apc2.ag93app.com.br/">
+    </head>
     """,
     height=0,
     width=0
