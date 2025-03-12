@@ -224,7 +224,7 @@ def show_welcome():
         st.markdown(modulos_html, unsafe_allow_html=True)
 
 def zerar_value_element():
-    """Função para zerar todos os value_element do usuário logado na tabela forms_tab onde type_element = 'input'"""
+    """Função para zerar todos os value_element do usuário logado na tabela forms_tab onde type_element é input, formula ou formulaH"""
     # Inicializa o estado do checkbox se não existir
     if 'confirma_zeragem' not in st.session_state:
         st.session_state.confirma_zeragem = False
@@ -240,13 +240,13 @@ def zerar_value_element():
                 conn = sqlite3.connect(DB_PATH)
                 cursor = conn.cursor()
                 
-                # Atualiza value_element para 0.0 apenas onde type_element = 'input'
+                # Atualiza value_element para 0.0 para os tipos especificados
                 cursor.execute("""
                     UPDATE forms_tab 
                     SET value_element = 0.0 
                     WHERE user_id = ? 
                     AND value_element IS NOT NULL
-                    AND type_element = 'input'
+                    AND type_element IN ('input', 'formula', 'formulaH')
                 """, (st.session_state["user_id"],))
                 
                 registros_afetados = cursor.rowcount
