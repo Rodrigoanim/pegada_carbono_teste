@@ -1,5 +1,5 @@
 # main.py
-# Data: 11/03/2025 - Hora: 11:00
+# Data: 17/03/2025 - Hora: 07:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
 # botão para zerar todos os type = input
@@ -52,7 +52,7 @@ components.html(
         
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
-        <meta property="og:url" content="https://apc2.ag93app.com.br/?v=1.0">
+        <meta property="og:url" content="https://apc.ag93app.com.br/?v=1.0">
         <meta property="og:title" content="Simulador da Pegada de Carbono do Café Torrado/Moído">
         <meta property="og:description" content="Ferramenta da ABIC para simulação da pegada de carbono do café torrado/moído">
         <meta property="og:image" content="https://ag93eventos.com.br/anim/pegada2.jpg?v=1.0">
@@ -61,7 +61,7 @@ components.html(
         <!-- Adicional SEO -->
         <meta name="author" content="ABIC">
         <meta name="keywords" content="café, pegada de carbono, sustentabilidade, ABIC, café torrado, café moído">
-        <link rel="canonical" href="https://apc2.ag93app.com.br/">
+        <link rel="canonical" href="https://apc.ag93app.com.br/">
     </head>
     """,
     height=0,
@@ -101,7 +101,7 @@ def authenticate_user():
         """, unsafe_allow_html=True)
         
         # Login na sidebar
-        st.sidebar.title("Login - versão TSW.2")
+        st.sidebar.title("Login - versão TSW 2.1")
         email = st.sidebar.text_input("E-mail", key="email")
         password = st.sidebar.text_input("Senha", type="password", key="password", on_change=lambda: st.session_state.update({"enter_pressed": True}) if "password" in st.session_state else None)
         
@@ -210,7 +210,7 @@ def show_welcome():
                 <p style="color: #2c3e50; font-size: 24px;">Módulos Disponíveis</p>
                 <div style="color: #34495e; font-size: 16px;">
                     <p>Entrada de Dados - Tipo do Café</p>
-                    <p>Entrada de Dados - Moagem e Torrefação</p>
+                    <p>Entrada de Dados - Torrefação e Moagem</p>
                     <p>Entrada de Dados - Embalagem</p>
                     <p>Simulações da Empresa</p>
                     <p>Simulações da Empresa Sem Etapa Agrícola</p>
@@ -328,9 +328,9 @@ def main():
     # Atualizar o mapeamento para incluir o novo nome do CRUD
     section_map = {
         "Tipo do Café": "cafe",
-        "Moagem e Torrefação": "moagem",
+        "Torrefação e Moagem": "moagem",
         "Embalagem": "embalagem",
-        "da Empresa": "Resultados",  # Updated from "Resultados"
+        "da Empresa": "Resultados",
         "Info Tabelas (CRUD)": "crud"
     }
     
@@ -339,12 +339,12 @@ def main():
         "Principal": ["Bem-vindo"],
         "Entrada de Dados": [
             "Tipo do Café",
-            "Moagem e Torrefação", 
+            "Torrefação e Moagem",
             "Embalagem"
         ],
         "Simulações": [
             "da Empresa",
-            "da Empresa sem Etapa Agrícola",  # Updated from "Resultados SEA"
+            "da Empresa sem Etapa Agrícola",
             "Comparação Setorial",
             "Comparação Setorial SEA",
             "Análise Energética - Torrefação"
@@ -388,7 +388,7 @@ def main():
     # Processa a seção selecionada
     if section == "Bem-vindo":
         show_welcome()
-    elif section in ["Tipo do Café", "Moagem e Torrefação", "Embalagem"]:
+    elif section in ["Tipo do Café", "Torrefação e Moagem", "Embalagem"]:
         process_forms_tab(section_map[section])
     elif section in [
         "da Empresa",
@@ -524,7 +524,7 @@ def save_current_form_data():
                         quantidade
                     ))
             
-            elif "Moagem e Torrefação" in previous_page:
+            elif "Torrefação e Moagem" in previous_page:
                 cursor.execute("""
                     INSERT OR REPLACE INTO form_moagem 
                     (user_id, data_input, tipo_moagem, temperatura)
