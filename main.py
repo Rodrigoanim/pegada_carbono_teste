@@ -1,9 +1,7 @@
-# main.py
-# Data: 03/04/2025 - Hora: 08:00
+# Data: 09/04/2025 - Hora: 12:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
-# ajustes TSW / Anna - redução de conteudo e ajustes de layout
-# logotipos no sidebar e rodapé
+# logotipos no sidebar e rodapé - Leticia ABIC
 
 import streamlit as st
 import sqlite3
@@ -46,7 +44,19 @@ import os
 
 # Obtém o caminho absoluto do diretório atual
 current_dir = os.path.dirname(os.path.abspath(__file__))
-logo_path = os.path.join(current_dir, "ABIC_007a7d.jpg")
+logo_path = os.path.join(current_dir, "Logo_ABIC_8eb0ae.jpg")
+
+# --- CSS Global ---
+# Adiciona CSS para ocultar o botão de fullscreen das imagens globalmente
+st.markdown("""
+    <style>
+        /* Oculta o botão baseado no aria-label identificado na inspeção */
+        button[aria-label="Fullscreen"] {
+            display: none !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+# --- Fim CSS Global ---
 
 # Adicionar o logotipo no sidebar usando st.sidebar.image
 st.sidebar.markdown("""
@@ -54,7 +64,7 @@ st.sidebar.markdown("""
         /* Estilo geral do sidebar */
         [data-testid="stSidebar"] {
             padding-top: 0rem;
-            background-color: #007a7d; # cor original #f0f0f0
+            background-color: #8eb0ae; # cor anterior #007a7d
         }
         
         /* Estilo para títulos no sidebar */
@@ -74,13 +84,13 @@ st.sidebar.markdown("""
         
         /* Estilo para links no sidebar */
         [data-testid="stSidebar"] a {
-            color: #007a7d;
+            color: #53a7a9;
             text-decoration: none;
         }
         
         /* Estilo para botões no sidebar */
         [data-testid="stSidebar"] button {
-            background-color: #007a7d;
+            background-color: #53a7a9; # cor anterior #007a7d
             color: white;
             border-radius: 5px;
             padding: 8px 15px;
@@ -105,8 +115,8 @@ st.sidebar.markdown("""
             padding: 1rem;
         }
         
-        /* Remove o ícone de fullscreen */
-        button[title="View fullscreen"] {
+        /* Remove o ícone de fullscreen usando o seletor aria-label (regra específica do sidebar mantida por segurança, embora a global deva cobrir) */
+        [data-testid="stSidebar"] button[aria-label="Fullscreen"] {
             display: none !important;
         }
     </style>
@@ -153,6 +163,32 @@ components.html(
 
 def authenticate_user():
     """Autentica o usuário e verifica seu perfil no banco de dados."""
+    # Adicionar CSS para a página de login
+    if not st.session_state.get("logged_in", False):
+        st.markdown("""
+            <style>
+                /* Estilo para a página de login */
+                [data-testid="stAppViewContainer"] {
+                    background-color: #007a7d;
+                }
+                
+                /* Remove a faixa branca superior */
+                [data-testid="stHeader"] {
+                    background-color: #007a7d;
+                }
+                
+                /* Ajuste da cor do texto para melhor contraste */
+                [data-testid="stAppViewContainer"] p {
+                    color: white;
+                }
+                
+                /* Mantém o fundo do sidebar na cor original */
+                [data-testid="stSidebar"] {
+                    background-color: #8eb0ae !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    
     # Verifica se o banco existe
     if not DB_PATH.exists():
         st.error(f"Banco de dados não encontrado em {DB_PATH}")
@@ -195,11 +231,38 @@ def authenticate_user():
                                         on_change=lambda: st.session_state.update({"enter_pressed": True}) 
                                         if "password" in st.session_state else None)
 
+        # Adiciona o checkbox de aceite dos termos
+        st.sidebar.markdown("""
+            <style>
+                /* Estilo para o link dos termos */
+                a {
+                    color: white !important;
+                    text-decoration: underline !important;
+                }
+                /* Estilo para o checkbox e seu texto */
+                .stCheckbox {
+                    color: white !important;
+                }
+                .stCheckbox label {
+                    color: white !important;
+                }
+                .stCheckbox a {
+                    color: white !important;
+                    text-decoration: underline !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        aceite_termos = st.sidebar.checkbox(
+            'Declaro que li e aceito os [termos de uso do simulador](/var/data/termos_de_uso.pdf)',
+            key='aceite_termos'
+        )
+
         col1, col2 = st.sidebar.columns(2)
         with col1:
-            login_button = st.button("Entrar")
+            login_button = st.button("Entrar", disabled=not aceite_termos)
         
-        if login_button:
+        if login_button and aceite_termos:
             cursor.execute("""
                 SELECT id, user_id, perfil, nome FROM usuarios WHERE email = ? AND senha = ?
             """, (email, password))
@@ -260,12 +323,12 @@ def show_welcome():
     # Layout em colunas usando st.columns
     col1, col2, col3 = st.columns(3)
     
-    # Coluna 1: Dados do Usuário
+    # Coluna 1: Seus Dados
     with col1:
         st.markdown(f"""
-            <div style="background-color: #e8f4f8; padding: 20px; border-radius: 8px;">
-                <p style="color: #2c3e50; font-size: 24px;">Seus Dados</p>
-                <div style="color: #34495e; font-size: 16px;">
+            <div style="background-color: #007a7d; padding: 20px; border-radius: 8px;">
+                <p style="color: #ffffff; font-size: 24px; font-weight: bold;">Seus Dados</p>
+                <div style="color: #ffffff; font-size: 16px;">
                     <p>ID: {st.session_state.get('user_id')}</p>
                     <p>Nome: {st.session_state.get('user_name')}</p>
                     <p>E-mail: {user_info[0]}</p>
@@ -275,15 +338,15 @@ def show_welcome():
             </div>
         """, unsafe_allow_html=True)
     
-    # Coluna 2: Atividades (atualizada com hora)
+    # Coluna 2: Suuas Atividades
     with col2:
         current_time = get_timezone_offset()
         ambiente = "Produção" if os.getenv('RENDER') else "Local"
         
         st.markdown(f"""
-            <div style="background-color: #e8f8ef; padding: 20px; border-radius: 8px;">
-                <p style="color: #2c3e50; font-size: 24px;">Suas Atividades</p>
-                <div style="color: #34495e; font-size: 16px;">
+            <div style="background-color: #53a7a9; padding: 20px; border-radius: 8px;">
+                <p style="color: #ffffff; font-size: 24px; font-weight: bold;">Suas Atividades</p>
+                <div style="color: #ffffff; font-size: 16px;">
                     <p>Data Atual: {current_time.strftime('%d/%m/%Y')}</p>
                     <p>Hora Atual: {current_time.strftime('%H:%M:%S')}</p>
                     <p>Ambiente: {ambiente}</p>
@@ -291,12 +354,12 @@ def show_welcome():
             </div>
         """, unsafe_allow_html=True)
     
-    # Coluna 3: Módulos
+    # Coluna 3: Módulos Disponíveis
     with col3:
         modulos_html = """
-            <div style="background-color: #fff8e8; padding: 20px; border-radius: 8px;">
-                <p style="color: #2c3e50; font-size: 24px;">Módulos Disponíveis</p>
-                <div style="color: #34495e; font-size: 16px;">
+            <div style="background-color: #8eb0ae; padding: 20px; border-radius: 8px;">
+                <p style="color: #ffffff; font-size: 24px; font-weight: bold;">Módulos Disponíveis</p>
+                <div style="color: #ffffff; font-size: 16px;">
                     <p>Entrada de Dados - Tipo do Café</p>
                     <p>Entrada de Dados - Torrefação e Moagem</p>
                     <p>Entrada de Dados - Embalagem</p>
@@ -509,17 +572,17 @@ def main():
         zerar_value_element()
 
     # Após todo o código do menu, adicionar espaço e a imagem do rodapé
-    st.sidebar.markdown("<br>" * 2, unsafe_allow_html=True)
+    st.sidebar.markdown("<br>" * 1, unsafe_allow_html=True)
     
     # Logo do rodapé
-    footer_logo_path = os.path.join(current_dir, "pegada_cafe.jpg")
+    footer_logo_path = os.path.join(current_dir, "Logo_Pegada_8eb0ae.jpg")
     if os.path.exists(footer_logo_path):
         col1, col2, col3 = st.sidebar.columns([1,2,1])
         with col2:
             st.image(
                 footer_logo_path,
-                width=150,
-                use_container_width=True
+                width=100, 
+                use_container_width=False  # Alterado para False para respeitar o width definido
             )
 
 def show_page(selected_simulation=None):
