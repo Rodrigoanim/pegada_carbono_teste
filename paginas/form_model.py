@@ -1,7 +1,7 @@
 # Arquivo: form_model.py
 # type formula font attribute - somente inteiros
-# 06/03/2025 - 11:00 - alterado para calcular condicaoH sem consultar tabela forms_insumos
-# section = embalagem com 6 colunas
+# 02/04/2025 - 11:00 - alterado para calcular condicaoH sem consultar tabela forms_insumos
+# section = embalagem com 6 colunas / type = input com configuração de estilo
 
 import sqlite3
 import streamlit as st

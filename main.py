@@ -1,4 +1,4 @@
-# Data: 09/04/2025 - Hora: 12:00
+# Data: 13/05/2025 - Hora: 08:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
 # logotipos no sidebar e rodapé - Leticia ABIC
@@ -26,7 +26,7 @@ st.set_page_config(
         'About': """
         ### Sobre o Sistema - Simulador da Pegada de Carbono do Café Torrado/Moído
         
-        Versão: 1.1. Beta
+        Versão: 3.0 - 13/05/2025
         
         Este sistema foi desenvolvido para simular a pegada de carbono 
         do processo de produção do café torrado/moído.
@@ -219,7 +219,7 @@ def authenticate_user():
         """, unsafe_allow_html=True)
         
         # Login na sidebar
-        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>SPCC - versão 2.2</h1>", unsafe_allow_html=True)
+        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>SPCC - ver. 3.0</h1>", unsafe_allow_html=True)
 
         # Criar labels personalizados com cor branca
         st.sidebar.markdown("<p style='color: white; margin-bottom: 5px;'>E-mail</p>", unsafe_allow_html=True)
@@ -252,9 +252,10 @@ def authenticate_user():
                 }
             </style>
         """, unsafe_allow_html=True)
-        
+
+        # link e path do arquivo termos_de_uso.pdf
         aceite_termos = st.sidebar.checkbox(
-            'Declaro que li e aceito os [termos de uso do simulador](/var/data/termos_de_uso.pdf)',
+            'Declaro que li e aceito os [termos de uso do simulador](https://ag93eventos.com.br/abic/termos_de_uso.pdf)',
             key='aceite_termos'
         )
 
