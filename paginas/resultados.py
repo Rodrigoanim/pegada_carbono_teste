@@ -1,5 +1,5 @@
 # resultados.py
-# Data: 13/05/2025 08:35
+# Data: 15/07/2025 
 # Pagina de resultados - Dashboard
 # rotina das Simulações, tabelas: forms_resultados, forms_result-sea, forms_setorial, forms_setorial_sea
 # novo layout para as tabelas e Gráficos - redução de conteudo e ajustes de layout
@@ -700,10 +700,10 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
             )
 
             titulo_map = {
-                "forms_resultados": "Simulador da Pegada de Carbono do Café Torrado/Moído",
-                "forms_result_sea": "Simulador da Pegada de Carbono - Sem Etapa Agrícola",
-                "forms_setorial": "Simulador da Pegada de Carbono do Café Torrado/Moído",
-                "forms_setorial_sea": "Simulador da Pegada de Carbono - Sem Etapa Agrícola"
+                "forms_resultados": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído",
+                "forms_result_sea": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído",
+                "forms_setorial": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído",
+                "forms_setorial_sea": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído"
             }
             subtitulo_map = {
                 "forms_resultados": "Simulações da Empresa",

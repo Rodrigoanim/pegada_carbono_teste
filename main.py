@@ -1,8 +1,9 @@
-# Data: 15/07/2025 - Hora: 18:00
+# Data: 16/07/2025 - Hora: 08:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
 # logotipos no sidebar e rodapé - Leticia ABIC
 # função para trocar de senha - OK
+# ajustes layout Anna - versão 3.2
 
 import streamlit as st
 import sqlite3
@@ -27,7 +28,7 @@ st.set_page_config(
         'About': """
         ### Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído 
         
-        Versão: 3.1 - 15/07/2025
+        Versão: 3.2 - 16/07/2025
         
         Esta Ferramenta foi desenvolvida para cálcular os indicadores ambientais da Produção de Café Torrado e Moído 
         
@@ -193,8 +194,8 @@ def authenticate_user():
             <p style='text-align: center; font-size: 35px;'>Faça login para acessar o sistema</p>
         """, unsafe_allow_html=True)
         
-        # Login na sidebar
-        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.1</h1>", unsafe_allow_html=True)
+        # Login na sidebar - versão 3.2
+        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.2</h1>", unsafe_allow_html=True)
 
         # Criar labels personalizados com cor branca
         st.sidebar.markdown("<p style='color: white; margin-bottom: 5px;'>E-mail</p>", unsafe_allow_html=True)
@@ -324,7 +325,7 @@ def show_welcome():
 
 
 def zerar_value_element():
-    """Função para zerar todos os value_element do usuário logado na tabela forms_tab onde type_element é input, formula ou formulaH"""
+    """Função para zerar todos os value_element do usuário logado na tabela forms_tab onde type_element é input ou formula"""
     # Inicializa o estado do checkbox se não existir
     if 'confirma_zeragem' not in st.session_state:
         st.session_state.confirma_zeragem = False
@@ -346,7 +347,7 @@ def zerar_value_element():
                     SET value_element = 0.0 
                     WHERE user_id = ? 
                     AND value_element IS NOT NULL
-                    AND type_element IN ('input', 'formula', 'formulaH')
+                    AND type_element IN ('input', 'formula')
                 """, (st.session_state["user_id"],))
                 
                 registros_afetados = cursor.rowcount
