@@ -1,9 +1,8 @@
-# Data: 22/07/2025 - Hora: 16:00
+# Data: 23/07/2025 - Hora: 12:00
 # IDE Cursor - claude 3.5 sonnet
 # comando: streamlit run main.py
-# logotipos no sidebar e rodapé - Leticia ABIC
 # função para trocar de senha - OK
-# ajustes layout Anna - versão 3.3
+# ajustes Textos Anna - versão 3.3a - OK
 
 import streamlit as st
 import sqlite3
@@ -28,9 +27,10 @@ st.set_page_config(
         'About': """
         ### Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído 
         
-        Versão: 3.3 - 22/07/2025
+        Versão: 3.3a - 23/07/2025
         
-        Esta Ferramenta foi desenvolvida para cálcular os indicadores ambientais da Produção de Café Torrado e Moído 
+        Esta Ferramenta foi desenvolvida para cálcular os indicadores ambientais da Produção de Café Torrado e Moído.
+        
         
         © 2025 Todos os direitos reservados. ABIC - Associação Brasileira de Indústrias de Café.
         """,
@@ -194,8 +194,8 @@ def authenticate_user():
             <p style='text-align: center; font-size: 35px;'></p> 
         """, unsafe_allow_html=True)
         
-        # Login na sidebar - versão 3.3
-        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3</h1>", unsafe_allow_html=True)
+        # Login na sidebar - versão 3.3a
+        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3a</h1>", unsafe_allow_html=True)
 
         # Criar labels personalizados com cor branca
         st.sidebar.markdown("<p style='color: white; margin-bottom: 5px;'>E-mail</p>", unsafe_allow_html=True)
