@@ -1,8 +1,8 @@
 # Arquivo: result_energetica.py
-# Data: 16/07/2025 07:00
+# Data: 28/07/2025 17:00
 # Pagina de Análise Energética - Torrefação
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
-# ajustes layout Anna - versão 3.0
+# ajustes layout Anna - versão 3.3b
 
 import streamlit as st
 import sqlite3
@@ -316,6 +316,45 @@ def show_results():
     except Exception as e:
         st.error(f"Erro ao carregar resultados: {str(e)}")
 
+def create_br_ticks(max_value):
+    """
+    Cria valores de tick formatados no padrão brasileiro para o eixo Y
+    """
+    try:
+        if max_value <= 0:
+            return [0], ["0"]
+        
+        # Determina o intervalo apropriado baseado no valor máximo
+        if max_value <= 100:
+            step = 20
+        elif max_value <= 500:
+            step = 100
+        elif max_value <= 1000:
+            step = 200
+        elif max_value <= 5000:
+            step = 1000
+        elif max_value <= 10000:
+            step = 2000
+        else:
+            step = int(max_value / 5)
+            # Arredonda o step para um número "bonito"
+            step = round(step / 1000) * 1000 if step > 1000 else step
+        
+        # Cria lista de valores
+        tick_vals = []
+        current = 0
+        while current <= max_value * 1.1:  # 10% a mais que o máximo
+            tick_vals.append(current)
+            current += step
+        
+        # Formata os valores usando a função brasileira
+        tick_texts = [format_br_number(val) for val in tick_vals]
+        
+        return tick_vals, tick_texts
+    except Exception as e:
+        print(f"Erro ao criar ticks brasileiros: {str(e)}")
+        return [0], ["0"]
+
 def grafico_ae(cursor, element):
     """
     Cria um gráfico de barras agrupadas para análise energética.
@@ -341,6 +380,11 @@ def grafico_ae(cursor, element):
         # Cria DataFrame para plotly
         df_plot = pd.DataFrame(dados, columns=series)
         df_plot.index = categorias
+        
+        # Encontra o valor máximo para criar ticks brasileiros
+        max_value = df_plot.values.max() if len(dados) > 0 else 0
+        tick_vals, tick_texts = create_br_ticks(max_value)
+        
         # Cria gráfico
         fig = go.Figure()
         for i, serie in enumerate(series):
@@ -379,6 +423,10 @@ def grafico_ae(cursor, element):
             xaxis=dict(
                 tickangle=0,
                 tickfont=dict(size=8)
+            ),
+            yaxis=dict(
+                tickvals=tick_vals,
+                ticktext=tick_texts
             )
         )
         # Exibe
@@ -675,6 +723,11 @@ def generate_pdf_content_energetica(cursor, user_id: int):
             if dados:
                 df_plot = pd.DataFrame(dados, columns=series)
                 df_plot.index = categorias
+                
+                # Encontra o valor máximo para criar ticks brasileiros
+                max_value = df_plot.values.max() if len(dados) > 0 else 0
+                tick_vals, tick_texts = create_br_ticks(max_value)
+                
                 fig = go.Figure()
                 for i, serie in enumerate(series):
                     fig.add_trace(go.Bar(
@@ -708,7 +761,9 @@ def generate_pdf_content_energetica(cursor, user_id: int):
                     ),
                     yaxis=dict(
                         title=None,
-                        tickfont=dict(size=10)
+                        tickfont=dict(size=10),
+                        tickvals=tick_vals,
+                        ticktext=tick_texts
                     )
                 )
                 img_bytes = fig.to_image(format="png", scale=3)
@@ -731,6 +786,11 @@ def generate_pdf_content_energetica(cursor, user_id: int):
             if dados:
                 df_plot = pd.DataFrame(dados, columns=series)
                 df_plot.index = categorias
+                
+                # Encontra o valor máximo para criar ticks brasileiros
+                max_value = df_plot.values.max() if len(dados) > 0 else 0
+                tick_vals, tick_texts = create_br_ticks(max_value)
+                
                 fig = go.Figure()
                 for i, serie in enumerate(series):
                     fig.add_trace(go.Bar(
@@ -764,7 +824,9 @@ def generate_pdf_content_energetica(cursor, user_id: int):
                     ),
                     yaxis=dict(
                         title=None,
-                        tickfont=dict(size=10)
+                        tickfont=dict(size=10),
+                        tickvals=tick_vals,
+                        ticktext=tick_texts
                     )
                 )
                 img_bytes = fig.to_image(format="png", scale=3)

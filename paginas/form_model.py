@@ -1,5 +1,5 @@
 # Arquivo: form_model.py
-# 15/07/2025 - 11:00 
+# 28/07/2025 - 20:00 
 # Fatoração: titulo(), formula()
 
 import sqlite3
@@ -12,6 +12,9 @@ from config import DB_PATH
 from paginas.monitor import registrar_acesso  # Ajustado para incluir o caminho completo
 
 MAX_COLUMNS = 5  # Número máximo de colunas no layout
+
+
+
 
 
 def date_to_days(date_str):
@@ -164,20 +167,12 @@ def calculate_formula(formula, values, cursor):
         
         result = float(eval(processed_formula, safe_env, {}))
         
-        # Formatação do resultado segundo as regras especificadas
+        # Retorna o valor original do cálculo (sem formatação)
+        # A formatação será feita apenas na exibição, não no armazenamento
         if result is None:
             return 0.0
             
-        # Formata o número com as casas decimais apropriadas
-        if abs(result) >= 1:
-            formatted_result = f"{result:,.0f}"  # Sem casas decimais, com separador de milhar
-        else:
-            formatted_result = f"{result:,.3f}"  # 3 casas decimais, com separador de milhar
-            
-        # Converte para o formato brasileiro (troca . por , para decimal)
-        formatted_result = formatted_result.replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
-        
-        return float(formatted_result.replace('.', '').replace(',', '.'))
+        return result
         
     except Exception as e:
         if "division by zero" in str(e):
@@ -598,10 +593,26 @@ def process_forms_tab(section='cafe'):
                         elif type_elem == 'input':
                             try:
                                 # Converte o valor REAL do banco para exibição no formato BR
+                                # Preserva as casas decimais originais ou usa máximo de 12 casas
                                 if value is not None:
-                                    current_value = f"{float(value):.2f}".replace('.', ',')
+                                    float_value = float(value)
+                                    # Determina o número de casas decimais necessárias (máximo 12)
+                                    if float_value == int(float_value):
+                                        # Se for número inteiro, mostra sem casas decimais
+                                        current_value = f"{int(float_value)}"
+                                    else:
+                                        # Formatação inteligente: detecta quantas casas decimais são realmente necessárias
+                                        # Evita forçar 12 casas que podem mostrar imprecisão binária
+                                        str_value = str(float_value)
+                                        if 'e' in str_value.lower():
+                                            # Para números muito pequenos em notação científica
+                                            current_value = f"{float_value:.6f}".rstrip('0').rstrip('.')
+                                        else:
+                                            # Para números normais, usa a representação string direta (mais precisa)
+                                            current_value = str_value
+                                    current_value = current_value.replace('.', ',')
                                 else:
-                                    current_value = "0,00"
+                                    current_value = "0"
                                 
                                 # Usa o nome do elemento como label se msg estiver vazio
                                 display_msg = msg if msg.strip() else name
@@ -690,6 +701,7 @@ def process_forms_tab(section='cafe'):
                                     SET value_element = ? 
                                     WHERE name_element = ? AND user_id = ?
                                 """, (result, name, st.session_state.user_id))
+                                conn.commit()  # Salva a alteração no banco
                                 
                             except Exception as e:
                                 st.error(f"Erro ao processar fórmula: {str(e)}")
@@ -847,7 +859,15 @@ def formula(cursor, element, conn=None):
         if str_value:
             str_value = str_value.strip('"""').strip("'''").strip('"').strip("'")
         result = calculate_formula(element[2], st.session_state.form_values, cursor)
-        result_br = f"{result:.2f}".replace('.', ',')
+        
+        # Formata o resultado segundo as regras especificadas para exibição
+        if result is None or result == 0:
+            result_br = "0"
+        elif abs(result) >= 1:
+            result_br = f"{result:,.0f}".replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
+        else:
+            result_br = f"{result:,.3f}".replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
+            
         if not str_value:
             str_value = '<div style="text-align: left; font-size: 16px; margin-bottom: 0;">[valor]</div>'
         st.empty()
@@ -865,6 +885,8 @@ def formula(cursor, element, conn=None):
         """, (result, name, st.session_state.user_id))
         if conn:
             conn.commit()
+        else:
+            cursor.connection.commit()  # Faz commit através do cursor se conn não foi passado
     except Exception as e:
         st.error(f"Erro ao processar fórmula: {str(e)}")
         return 0.0

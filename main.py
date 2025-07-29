@@ -1,8 +1,8 @@
-# Data: 23/07/2025 - Hora: 12:00
-# IDE Cursor - claude 3.5 sonnet
+# Data: 28/07/2025 - Hora: 16:00
+# IDE Cursor - claude-4 sonnet
 # comando: streamlit run main.py
 # função para trocar de senha - OK
-# ajustes Textos Anna - versão 3.3a - OK
+# ajustes Textos Anna - versão 28 Julho
 
 import streamlit as st
 import sqlite3
@@ -27,7 +27,7 @@ st.set_page_config(
         'About': """
         ### Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído 
         
-        Versão: 3.3a - 23/07/2025
+        Versão: 3.3b - 28/07/2025
         
         Esta Ferramenta foi desenvolvida para cálcular os indicadores ambientais da Produção de Café Torrado e Moído.
         
@@ -194,8 +194,8 @@ def authenticate_user():
             <p style='text-align: center; font-size: 35px;'></p> 
         """, unsafe_allow_html=True)
         
-        # Login na sidebar - versão 3.3a
-        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3a</h1>", unsafe_allow_html=True)
+        # Login na sidebar - versão 3.3b
+        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3b</h1>", unsafe_allow_html=True)
 
         # Criar labels personalizados com cor branca
         st.sidebar.markdown("<p style='color: white; margin-bottom: 5px;'>E-mail</p>", unsafe_allow_html=True)
