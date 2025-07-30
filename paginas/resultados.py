@@ -1,5 +1,5 @@
 # resultados.py
-# Data: 15/07/2025 
+# Data: 30/07/2025 
 # Pagina de resultados - Dashboard
 # rotina das Simulações, tabelas: forms_resultados, forms_result-sea, forms_setorial, forms_setorial_sea
 # novo layout para as tabelas e Gráficos - redução de conteudo e ajustes de layout
@@ -593,10 +593,23 @@ def subtitulo(titulo_pagina: str):
                     if buffer:
                         conn.close()
                         msg_placeholder.success("PDF gerado com sucesso!")
+                        
+                        # Gera nome do arquivo baseado no subtítulo
+                        subtitulo_map = {
+                            "forms_resultados": "Simulações - Empresa com Etapa Agrícola",
+                            "forms_result_sea": "Simulações - Empresa Sem Etapa Agrícola",
+                            "forms_setorial": "Simulações - Setorial com Etapa Agrícola",
+                            "forms_setorial_sea": "Simulações - Setorial Sem Etapa Agrícola"
+                        }
+                        subtitulo = subtitulo_map.get(st.session_state.tabela_escolhida, "Simulações")
+                        # Remove caracteres especiais e substitui espaços por underscores
+                        nome_arquivo = subtitulo.replace(" ", "_").replace("-", "").replace(":", "").lower()
+                        nome_arquivo = f"{nome_arquivo}.pdf"
+                        
                         st.download_button(
                             label="Baixar PDF",
                             data=buffer.getvalue(),
-                            file_name="simulacoes.pdf",
+                            file_name=nome_arquivo,
                             mime="application/pdf",
                         )
                     
@@ -646,11 +659,11 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
             title_style = ParagraphStyle(
                 'CustomTitle',
                 parent=styles['Heading1'],
-                fontSize=26,
+                fontSize=21,  # Reduzido 20% (26 → 21)
                 alignment=1,
                 textColor=colors.HexColor('#1E1E1E'),
                 fontName='Helvetica',
-                leading=26,
+                leading=21,  # Ajustado proporcionalmente
                 spaceBefore=15,
                 spaceAfter=20,
                 borderRadius=5,
@@ -660,7 +673,7 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
             subtitle_style = ParagraphStyle(
                 'CustomSubtitle',
                 parent=styles['Heading2'],
-                fontSize=20,
+                fontSize=20,  # Mantido tamanho original
                 alignment=1,
                 textColor=colors.HexColor('#1E1E1E'),
                 fontName='Helvetica',
@@ -686,15 +699,15 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')])
             ])
 
-            # Estilo para títulos dos gráficos (reduzido em 30%)
+            # Estilo para títulos dos gráficos (reduzido em 20%)
             graphic_title_style = ParagraphStyle(
                 'GraphicTitle',
                 parent=styles['Heading2'],
-                fontSize=14,  # 30% menor que 20px
+                fontSize=11,  # Reduzido 20% (14 → 11)
                 alignment=1,
                 textColor=colors.HexColor('#1E1E1E'),
                 fontName='Helvetica',
-                leading=16,
+                leading=13,  # Ajustado proporcionalmente
                 spaceBefore=6,
                 spaceAfter=8
             )
@@ -706,10 +719,10 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
                 "forms_setorial_sea": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído"
             }
             subtitulo_map = {
-                "forms_resultados": "Simulações da Empresa",
-                "forms_result_sea": "Simulações da Empresa Sem Etapa Agrícola",
-                "forms_setorial": "Simulações - Comparação Setorial",
-                "forms_setorial_sea": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+                "forms_resultados": "Simulações: Empresa com Etapa Agrícola",
+                "forms_result_sea": "Simulações: Empresa Sem Etapa Agrícola",
+                "forms_setorial": "Simulações: Setorial com Etapa Agrícola",
+                "forms_setorial_sea": "Simulações: Setorial Sem Etapa Agrícola"
             }
             titulo_principal = titulo_map.get(tabela_escolhida, "Simulador")
             subtitulo_principal = subtitulo_map.get(tabela_escolhida, "Simulações")

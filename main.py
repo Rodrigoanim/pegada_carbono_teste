@@ -582,10 +582,10 @@ def main():
     ]:
         # Mapeamento de seções para títulos completos
         section_to_title = {
-            "Empresa com Etapa Agrícola": "Simulações da Empresa",
-            "Empresa sem Etapa Agrícola": "Simulações da Empresa Sem Etapa Agrícola",
-            "Setorial com Etapa Agrícola": "Simulações - Comparação Setorial",
-            "Setorial sem Etapa Agrícola": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+            "Empresa com Etapa Agrícola": "Simulações: Empresa com Etapa Agrícola",
+            "Empresa sem Etapa Agrícola": "Simulações: Empresa Sem Etapa Agrícola",
+            "Setorial com Etapa Agrícola": "Simulações: Setorial com Etapa Agrícola",
+            "Setorial sem Etapa Agrícola": "Simulações: Setorial Sem Etapa Agrícola"
         }
         # Passa o título completo para show_page
         show_page(selected_simulation=section_to_title[section])
@@ -628,21 +628,21 @@ def show_page(selected_simulation=None):
     """
     # Mapeamento de páginas para tabelas e títulos
     PAGES_CONFIG = {
-        "Simulações da Empresa": {
+        "Simulações: Empresa com Etapa Agrícola": {
             "tabela": "forms_resultados",
-            "titulo": "Simulações da Empresa"
+            "titulo": "Simulações: Empresa com Etapa Agrícola"
         },
-        "Simulações da Empresa Sem Etapa Agrícola": {
+        "Simulações: Empresa Sem Etapa Agrícola": {
             "tabela": "forms_result_sea",
-            "titulo": "Simulações da Empresa Sem Etapa Agrícola"
+            "titulo": "Simulações: Empresa sem Etapa Agrícola"
         },
-        "Simulações - Comparação Setorial": {
+        "Simulações: Setorial com Etapa Agrícola": {
             "tabela": "forms_setorial",
-            "titulo": "Simulações - Comparação Setorial"
+            "titulo": "Simulações: Setorial com Etapa Agrícola"
         },
-        "Simulações - Comparação Setorial Sem Etapa Agrícola": {
+        "Simulações: Setorial Sem Etapa Agrícola": {
             "tabela": "forms_setorial_sea",
-            "titulo": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+            "titulo": "Simulações: Setorial sem Etapa Agrícola"
         }
     }
 

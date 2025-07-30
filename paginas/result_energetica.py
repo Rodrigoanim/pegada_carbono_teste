@@ -165,7 +165,7 @@ def subtitulo():
         <p style='
             text-align: Left;
             font-size: 36px;
-            color: #4A4A4A;
+            color: #000000;
             margin-top: 4px;
             margin-bottom: 25px;
             font-family: sans-serif;
@@ -187,10 +187,11 @@ def show_results():
         # Adiciona o subtítulo no início da página
         subtitulo()
         
-        # Botão Gerar PDF centralizado na tela
+        # Botão Gerar PDF na coluna da direita
         col_esq, col_centro, col_dir = st.columns([3,2,3])
-        with col_centro:
+        with col_dir:
             gerar_pdf = st.button("Gerar PDF", type="primary", key="btn_gerar_pdf_energetica")
+        with col_centro:
             msg_placeholder = st.empty()
         if gerar_pdf:
             try:
@@ -215,10 +216,16 @@ def show_results():
                     # Centralizar o botão de download
                     col_esq_dl, col_centro_dl, col_dir_dl = st.columns([3,2,3])
                     with col_centro_dl:
+                        # Gera nome do arquivo baseado no subtítulo
+                        titulo_arquivo = "Análise Energética - Torrefação"
+                        # Remove caracteres especiais e substitui espaços por underscores
+                        nome_arquivo = titulo_arquivo.replace(" ", "_").replace("-", "_").replace(":", "").lower()
+                        nome_arquivo = f"{nome_arquivo}.pdf"
+                        
                         st.download_button(
                             label="Baixar PDF",
                             data=buffer.getvalue(),
-                            file_name="analise_energetica.pdf",
+                            file_name=nome_arquivo,
                             mime="application/pdf",
                         )
             except Exception as e:
@@ -601,43 +608,45 @@ def generate_pdf_content_energetica(cursor, user_id: int):
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=26,
+            fontSize=21,  # Reduzido 20% (26 → 21)
             alignment=1,
             textColor=colors.HexColor('#1E1E1E'),
             fontName='Helvetica',
-            leading=26,
+            leading=21,  # Ajustado proporcionalmente
             spaceBefore=15,
             spaceAfter=20,
         )
         subtitle_style = ParagraphStyle(
             'CustomSubtitle',
             parent=styles['Heading2'],
-            fontSize=18,
+            fontSize=18,  # Mantido tamanho original
             alignment=1,
             textColor=colors.HexColor('#1E1E1E'),
             fontName='Helvetica',
-            leading=22,
+            leading=22,  # Valor original
             spaceBefore=10,
             spaceAfter=15
         )
         graphic_title_style = ParagraphStyle(
             'GraphicTitle',
             parent=styles['Heading2'],
-            fontSize=14,
+            fontSize=11,  # Reduzido 20% (14 → 11)
             alignment=1,
             textColor=colors.HexColor('#1E1E1E'),
             fontName='Helvetica',
-            leading=16,
+            leading=13,  # Ajustado proporcionalmente
             spaceBefore=6,
             spaceAfter=8
         )
 
         elements = []
-        # Título e subtítulo
-        elements.append(Paragraph("Análise Energética - Torrefação", title_style))
-        elements.append(Spacer(1, 10))
+        # Título principal, título e subtítulo (espaçamentos reduzidos)
+        elements.append(Paragraph("Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído", title_style))
+        elements.append(Spacer(1, 8))  # Reduzido de 15 para 8
+        elements.append(Paragraph("Análise Energética - Torrefação", subtitle_style))
+        elements.append(Spacer(1, 5))  # Reduzido de 10 para 5
         elements.append(Paragraph("Indicadores Energéticos da Etapa de Torrefação", subtitle_style))
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 12))  # Reduzido de 20 para 12
 
         # Buscar elementos da tabela e gráficos
         cursor.execute("""
@@ -709,7 +718,7 @@ def generate_pdf_content_energetica(cursor, user_id: int):
             t = Table(table_data, colWidths=[graph_width * 0.6, graph_width * 0.4])
             t.setStyle(table_style)
             elements.append(Table([[t]], colWidths=[graph_width], style=[('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-            elements.append(Spacer(1, 20))
+            elements.append(Spacer(1, 10))  # Reduzido de 20 para 10
 
         if grafico1:
             select = grafico1[5]
@@ -769,7 +778,7 @@ def generate_pdf_content_energetica(cursor, user_id: int):
                 img_bytes = fig.to_image(format="png", scale=3)
                 elements.append(Paragraph(msg, graphic_title_style))
                 elements.append(Image(io.BytesIO(img_bytes), width=graph_width, height=graph_height))
-                elements.append(Spacer(1, 20))
+                elements.append(Spacer(1, 10))  # Reduzido de 20 para 10
 
         elements.append(PageBreak())
 
