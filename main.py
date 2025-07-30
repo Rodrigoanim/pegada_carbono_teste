@@ -1,4 +1,4 @@
-# Data: 28/07/2025 - Hora: 16:00
+# Data: 30/07/2025 - Hora: 16:00
 # IDE Cursor - claude-4 sonnet
 # comando: streamlit run main.py
 # função para trocar de senha - OK
@@ -525,10 +525,10 @@ def main():
             "Embalagem"
         ],
         "Simulações": [
-            "da Empresa",
-            "da Empresa sem Etapa Agrícola",
-            "Comparação Setorial",
-            "Comparação Setorial SEA",
+            "Empresa com Etapa Agrícola",
+            "Empresa sem Etapa Agrícola",
+            "Setorial com Etapa Agrícola",
+            "Setorial sem Etapa Agrícola",
             "Análise Energética - Torrefação"
         ],
         "Administração": []  # Iniciando vazio para adicionar itens na ordem correta
@@ -575,17 +575,17 @@ def main():
     elif section in ["Tipo do Café", "Torrefação e Moagem", "Embalagem"]:
         process_forms_tab(section_map[section])
     elif section in [
-        "da Empresa",
-        "da Empresa sem Etapa Agrícola",
-        "Comparação Setorial",
-        "Comparação Setorial SEA"
+        "Empresa com Etapa Agrícola",
+        "Empresa sem Etapa Agrícola",
+        "Setorial com Etapa Agrícola",
+        "Setorial sem Etapa Agrícola"
     ]:
         # Mapeamento de seções para títulos completos
         section_to_title = {
-            "da Empresa": "Simulações da Empresa",
-            "da Empresa sem Etapa Agrícola": "Simulações da Empresa Sem Etapa Agrícola",
-            "Comparação Setorial": "Simulações - Comparação Setorial",
-            "Comparação Setorial SEA": "Simulações - Comparação Setorial Sem Etapa Agrícola"
+            "Empresa com Etapa Agrícola": "Simulações da Empresa",
+            "Empresa sem Etapa Agrícola": "Simulações da Empresa Sem Etapa Agrícola",
+            "Setorial com Etapa Agrícola": "Simulações - Comparação Setorial",
+            "Setorial sem Etapa Agrícola": "Simulações - Comparação Setorial Sem Etapa Agrícola"
         }
         # Passa o título completo para show_page
         show_page(selected_simulation=section_to_title[section])
