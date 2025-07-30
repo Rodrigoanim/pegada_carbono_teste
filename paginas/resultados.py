@@ -1,5 +1,5 @@
 # resultados.py
-# Data: 30/07/2025 
+# Data: 30/07/2025 - 18h00
 # Pagina de resultados - Dashboard
 # rotina das Simulações, tabelas: forms_resultados, forms_result-sea, forms_setorial, forms_setorial_sea
 # novo layout para as tabelas e Gráficos - redução de conteudo e ajustes de layout

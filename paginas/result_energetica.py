@@ -1,5 +1,5 @@
 # Arquivo: result_energetica.py
-# Data: 28/07/2025 17:00
+# Data: 30/07/2025 18:00
 # Pagina de Análise Energética - Torrefação
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
 # ajustes layout Anna - versão 3.3b

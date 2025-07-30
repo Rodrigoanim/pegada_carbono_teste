@@ -1,5 +1,5 @@
 # Arquivo: form_model.py
-# 28/07/2025 - 20:00 
+# 30/07/2025 - 18:00 
 # Fatoração: titulo(), formula()
 
 import sqlite3
@@ -12,9 +12,6 @@ from config import DB_PATH
 from paginas.monitor import registrar_acesso  # Ajustado para incluir o caminho completo
 
 MAX_COLUMNS = 5  # Número máximo de colunas no layout
-
-
-
 
 
 def date_to_days(date_str):
