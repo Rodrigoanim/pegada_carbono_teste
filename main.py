@@ -1,8 +1,9 @@
 # Data: 30/07/2025 - Hora: 18:00
 # IDE Cursor - claude-4 sonnet
-# comando: streamlit run main.py
+#  .\env\Scripts\Activate
+# streamlit run main.py
 # função para trocar de senha - OK
-# ajustes Textos Anna - versão 28 Julho
+# ajustes Textos Anna - versão 
 
 import streamlit as st
 import sqlite3
@@ -27,7 +28,7 @@ st.set_page_config(
         'About': """
         ### Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído 
         
-        Versão: 3.3b - 28/07/2025
+        Versão: 3.3c - 05/08/2025
         
         Esta Ferramenta foi desenvolvida para cálcular os indicadores ambientais da Produção de Café Torrado e Moído.
         
@@ -194,8 +195,8 @@ def authenticate_user():
             <p style='text-align: center; font-size: 35px;'></p> 
         """, unsafe_allow_html=True)
         
-        # Login na sidebar - versão 3.3b
-        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3b</h1>", unsafe_allow_html=True)
+        # Login na sidebar - versão 3.3c
+        st.sidebar.markdown("<h1 style='color: white; font-size: 24px;'>FCIAPC - ver. 3.3c</h1>", unsafe_allow_html=True)
 
         # Criar labels personalizados com cor branca
         st.sidebar.markdown("<p style='color: white; margin-bottom: 5px;'>E-mail</p>", unsafe_allow_html=True)
@@ -580,13 +581,10 @@ def main():
         "Setorial com Etapa Agrícola",
         "Setorial sem Etapa Agrícola"
     ]:
-        # Mapeamento de seções para títulos completos
-        section_to_title = {
-            "Empresa com Etapa Agrícola": "Simulações: Empresa com Etapa Agrícola",
-            "Empresa sem Etapa Agrícola": "Simulações: Empresa Sem Etapa Agrícola",
-            "Setorial com Etapa Agrícola": "Simulações: Setorial com Etapa Agrícola",
-            "Setorial sem Etapa Agrícola": "Simulações: Setorial Sem Etapa Agrícola"
-        }
+        # Importa configurações centralizadas de subtítulos
+        from paginas.resultados import get_subtitle_configs
+        configs = get_subtitle_configs()
+        section_to_title = configs["section_to_title"]
         # Passa o título completo para show_page
         show_page(selected_simulation=section_to_title[section])
     elif section == "Análise Energética - Torrefação":
@@ -626,25 +624,9 @@ def show_page(selected_simulation=None):
     Args:
         selected_simulation: Título da simulação selecionada
     """
-    # Mapeamento de páginas para tabelas e títulos
-    PAGES_CONFIG = {
-        "Simulações: Empresa com Etapa Agrícola": {
-            "tabela": "forms_resultados",
-            "titulo": "Simulações: Empresa com Etapa Agrícola"
-        },
-        "Simulações: Empresa Sem Etapa Agrícola": {
-            "tabela": "forms_result_sea",
-            "titulo": "Simulações: Empresa sem Etapa Agrícola"
-        },
-        "Simulações: Setorial com Etapa Agrícola": {
-            "tabela": "forms_setorial",
-            "titulo": "Simulações: Setorial com Etapa Agrícola"
-        },
-        "Simulações: Setorial Sem Etapa Agrícola": {
-            "tabela": "forms_setorial_sea",
-            "titulo": "Simulações: Setorial sem Etapa Agrícola"
-        }
-    }
+    # Importa configurações centralizadas de páginas
+    from paginas.resultados import get_pages_config
+    PAGES_CONFIG = get_pages_config()
 
     # Verifica se usuário está logado
     if "user_id" not in st.session_state:

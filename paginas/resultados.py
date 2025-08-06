@@ -1,5 +1,5 @@
 # resultados.py
-# Data: 30/07/2025 - 18h00
+# Data: 31/07/2025 - 15h00
 # Pagina de resultados - Dashboard
 # rotina das Simulações, tabelas: forms_resultados, forms_result-sea, forms_setorial, forms_setorial_sea
 # novo layout para as tabelas e Gráficos - redução de conteudo e ajustes de layout
@@ -7,38 +7,79 @@
 # type: ignore
 # pylance: disable=reportMissingModuleSource
 
-try:
-    import reportlab
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import (
-        SimpleDocTemplate,
-        Paragraph,
-        Spacer,
-        Table,
-        TableStyle,
-        Image,
-        KeepTogether,
-        PageBreak
-    )
-except ImportError as e:
-    print(f"Erro ao importar ReportLab: {e}")
-
 import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
-from datetime import date
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import io
-import tempfile
-import matplotlib.pyplot as plt
+import time
 import traceback
+import os
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from config import DB_PATH
+
+# Configurações centralizadas para subtítulos
+def get_subtitle_configs():
+    """
+    Retorna todas as configurações de subtítulos centralizadas
+    """
+    return {
+        # Mapeamento de tabelas para subtítulos completos (usado no main.py)
+        "table_to_full_subtitle": {
+            "forms_resultados": "Simulações: Empresa com Etapa Agrícola (Cradle to Gate)",
+            "forms_result_sea": "Simulações: Empresa sem Etapa Agrícola (Gate to Gate)",
+            "forms_setorial": "Simulações: Setorial com Etapa Agrícola (Cradle to Gate)",
+            "forms_setorial_sea": "Simulações: Setorial sem Etapa Agrícola (Gate to Gate)"
+        },
+        # Mapeamento de seções para títulos completos (usado no main.py)
+        "section_to_title": {
+            "Empresa com Etapa Agrícola": "Simulações: Empresa com Etapa Agrícola (Cradle to Gate)",
+            "Empresa sem Etapa Agrícola": "Simulações: Empresa sem Etapa Agrícola (Gate to Gate)",
+            "Setorial com Etapa Agrícola": "Simulações: Setorial com Etapa Agrícola (Cradle to Gate)",
+            "Setorial sem Etapa Agrícola": "Simulações: Setorial sem Etapa Agrícola (Gate to Gate)"
+        },
+        # Mapeamento para nomes de arquivos PDF (usado em resultados.py)
+        "table_to_pdf_filename": {
+            "forms_resultados": "Simulações - Empresa com Etapa Agrícola (Cradle to Gate)",
+            "forms_result_sea": "Simulações - Empresa sem Etapa Agrícola (Gate to Gate)",
+            "forms_setorial": "Simulações - Setorial com Etapa Agrícola (Cradle to Gate)",
+            "forms_setorial_sea": "Simulações - Setorial sem Etapa Agrícola (Gate to Gate)"
+        }
+    }
+
+def get_pages_config():
+    """
+    Retorna a configuração de páginas para o main.py
+    """
+    configs = get_subtitle_configs()
+    return {
+        configs["table_to_full_subtitle"]["forms_resultados"]: {
+            "tabela": "forms_resultados",
+            "titulo": configs["table_to_full_subtitle"]["forms_resultados"]
+        },
+        configs["table_to_full_subtitle"]["forms_result_sea"]: {
+            "tabela": "forms_result_sea",
+            "titulo": configs["table_to_full_subtitle"]["forms_result_sea"]
+        },
+        configs["table_to_full_subtitle"]["forms_setorial"]: {
+            "tabela": "forms_setorial",
+            "titulo": configs["table_to_full_subtitle"]["forms_setorial"]
+        },
+        configs["table_to_full_subtitle"]["forms_setorial_sea"]: {
+            "tabela": "forms_setorial_sea",
+            "titulo": configs["table_to_full_subtitle"]["forms_setorial_sea"]
+        }
+    }
+
+from datetime import date
 from paginas.monitor import registrar_acesso
 from paginas.form_model_recalc import verificar_dados_usuario, calculate_formula, atualizar_formulas
-import time
 
-from config import DB_PATH  # Adicione esta importação
 
 def format_br_number(value):
     """
@@ -304,7 +345,7 @@ def grafico_barra(cursor, element):
             width=None,  # largura responsiva
             # Configuração do eixo X
             xaxis=dict(
-                tickfont=dict(size=8),  # reduzido em 40%
+                tickfont=dict(size=15),  # tamanho fonte eixo X
             ),
             # Configuração do eixo Y
             yaxis=dict(
@@ -525,7 +566,7 @@ def gerar_dados_grafico(cursor, elemento, tabela_escolhida: str, height_pct=100,
             margin=dict(t=30, b=50),
             xaxis=dict(
                 title=None,
-                tickfont=dict(size=8)  # reduzido em 40%
+                tickfont=dict(size=8)
             ),
             yaxis=dict(
                 title=None,
@@ -595,13 +636,8 @@ def subtitulo(titulo_pagina: str):
                         msg_placeholder.success("PDF gerado com sucesso!")
                         
                         # Gera nome do arquivo baseado no subtítulo
-                        subtitulo_map = {
-                            "forms_resultados": "Simulações - Empresa com Etapa Agrícola",
-                            "forms_result_sea": "Simulações - Empresa Sem Etapa Agrícola",
-                            "forms_setorial": "Simulações - Setorial com Etapa Agrícola",
-                            "forms_setorial_sea": "Simulações - Setorial Sem Etapa Agrícola"
-                        }
-                        subtitulo = subtitulo_map.get(st.session_state.tabela_escolhida, "Simulações")
+                        configs = get_subtitle_configs()
+                        subtitulo = configs["table_to_pdf_filename"].get(st.session_state.tabela_escolhida, "Simulações")
                         # Remove caracteres especiais e substitui espaços por underscores
                         nome_arquivo = subtitulo.replace(" ", "_").replace("-", "").replace(":", "").lower()
                         nome_arquivo = f"{nome_arquivo}.pdf"
@@ -718,12 +754,8 @@ def generate_pdf_content(cursor, user_id: int, tabela_escolhida: str):
                 "forms_setorial": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído",
                 "forms_setorial_sea": "Ferramenta para Cálculo de Indicadores Ambientais da Produção de Café Torrado e Moído"
             }
-            subtitulo_map = {
-                "forms_resultados": "Simulações: Empresa com Etapa Agrícola",
-                "forms_result_sea": "Simulações: Empresa Sem Etapa Agrícola",
-                "forms_setorial": "Simulações: Setorial com Etapa Agrícola",
-                "forms_setorial_sea": "Simulações: Setorial Sem Etapa Agrícola"
-            }
+            configs = get_subtitle_configs()
+            subtitulo_map = configs["table_to_full_subtitle"]
             titulo_principal = titulo_map.get(tabela_escolhida, "Simulador")
             subtitulo_principal = subtitulo_map.get(tabela_escolhida, "Simulações")
             elements.append(Paragraph(titulo_principal, title_style))

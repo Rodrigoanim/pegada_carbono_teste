@@ -1,5 +1,5 @@
 # Arquivo: result_energetica.py
-# Data: 30/07/2025 18:00
+# Data: 31/07/2025 15:00
 # Pagina de Análise Energética - Torrefação
 # Adaptação para o uso de Discos SSD e a pasta Data para o banco de dados
 # ajustes layout Anna - versão 3.3b
@@ -429,7 +429,7 @@ def grafico_ae(cursor, element):
             height=400,
             xaxis=dict(
                 tickangle=0,
-                tickfont=dict(size=8)
+                tickfont=dict(size=14)  # tamanho do fonte do eixo X
             ),
             yaxis=dict(
                 tickvals=tick_vals,
